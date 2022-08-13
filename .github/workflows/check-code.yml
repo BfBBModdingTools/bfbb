@@ -21,17 +21,20 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: rustup component add rustfmt
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
+      - name: Add rustup components
+        run: rustup component add rustfmt && rustup component add clippy
+      - name: Check code formatting
+      uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
-      - uses: actions-rs/cargo@v1
+      - name: Check build
+        uses: actions-rs/cargo@v1
         with:
           command: check
           args: --features serde,game-interface
-      - uses: actions-rs/cargo@v1
+      - name: Deny all clippy warnings
+        uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: --features serde,game-interface -- -D warnings
