@@ -25,7 +25,7 @@ log = "0.4"
 #Memory Shenanigans
 process-memory = { version = "0.4", optional = true } # For reading external process memory
 proc-maps = { version = "0.2", optional = true } # For querying memory maps
-sysinfo = { version = "0.23", optional = true } # For getting PID by name
+sysinfo = { version = "0.25", optional = true } # For getting PID by name
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", optional = true }
