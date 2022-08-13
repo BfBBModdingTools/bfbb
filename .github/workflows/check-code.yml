@@ -24,7 +24,7 @@ jobs:
       - name: Add rustup components
         run: rustup component add rustfmt && rustup component add clippy
       - name: Check code formatting
-      uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
