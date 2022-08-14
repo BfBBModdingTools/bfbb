@@ -15,8 +15,8 @@ game-interface = ["dep:process-memory", "dep:proc-maps", "dep:sysinfo", "dep:win
 
 [dependencies]
 serde = { version = "1", features = ["derive"], optional = true }
-strum = "0.23"
-strum_macros = "0.23"
+strum = "0.24"
+strum_macros = "0.24"
 
 thiserror = "1"
 
