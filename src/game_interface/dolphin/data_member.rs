@@ -1,3 +1,4 @@
+use bytemuck::CheckedBitPattern;
 use process_memory::{Architecture, CopyAddress, Memory, ProcessHandle, PutAddress};
 
 const GCN_BASE_ADDRESS: usize = 0x80000000;
@@ -13,7 +14,7 @@ pub struct DataMember<T> {
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T: Sized + Copy> DataMember<T> {
+impl<T> DataMember<T> {
     #[must_use]
     pub fn new_offset(
         handle: ProcessHandle,
@@ -29,7 +30,7 @@ impl<T: Sized + Copy> DataMember<T> {
     }
 }
 
-impl<T: Sized + Copy> Memory<T> for DataMember<T> {
+impl<T: CheckedBitPattern> Memory<T> for DataMember<T> {
     fn set_offset(&mut self, new_offsets: Vec<usize>) {
         self.offsets = new_offsets;
     }
@@ -68,12 +69,15 @@ impl<T: Sized + Copy> Memory<T> for DataMember<T> {
 
     /// Returned value will be big endian!
     fn read(&self) -> std::io::Result<T> {
+        use std::io::{Error, ErrorKind};
         let offset = self.get_offset()?;
 
         let mut buffer = vec![0u8; std::mem::size_of::<T>()];
         self.process.copy_address(offset, &mut buffer)?;
 
-        Ok(unsafe { (buffer.as_ptr() as *const T).read_unaligned() })
+        let val = bytemuck::checked::try_from_bytes(&buffer[..])
+            .map_err(|_| Error::from(ErrorKind::InvalidData))?;
+        Ok(*val)
     }
 
     /// `value` is expected to be big endian.

@@ -26,6 +26,7 @@ log = "0.4"
 process-memory = { version = "0.4", optional = true } # For reading external process memory
 proc-maps = { version = "0.2", optional = true } # For querying memory maps
 sysinfo = { version = "0.26", optional = true } # For getting PID by name
+bytemuck = "1.12"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", optional = true }
