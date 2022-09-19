@@ -1,9 +1,11 @@
 //! Allows for performing actions on or reading information about a running instance of BfBB.
 
-pub mod dolphin;
-
-use crate::{Level, Spatula};
 use thiserror::Error;
+
+use crate::game_state::{GameMode, GameOstrich, GameState};
+use crate::{Level, Spatula};
+
+pub mod dolphin;
 
 /// Error type for failed [GameInterface] actions.
 ///
@@ -46,6 +48,21 @@ pub trait GameInterface {
 
     /// Unlock the Bubble Bowl and Cruise Bubble
     fn unlock_powers(&self) -> InterfaceResult<()>;
+
+    /// Get the current [`GameMode`].
+    fn get_current_game_mode(&self) -> InterfaceResult<GameMode>;
+
+    /// Set the current [`GameMode`].
+    fn set_game_mode(&self, new_mode: GameMode) -> InterfaceResult<()>;
+
+    /// Get the current [`GameOstrich`]
+    fn get_current_game_ostrich(&self) -> InterfaceResult<GameOstrich>;
+
+    /// Get the current [`GameState`]
+    fn get_current_game_state(&self) -> InterfaceResult<GameState>;
+
+    /// Set the current [`GameState`]
+    fn set_game_state(&self, new_state: GameState) -> InterfaceResult<()>;
 
     /// Get the level that the player is currently in
     fn get_current_level(&self) -> InterfaceResult<Level>;

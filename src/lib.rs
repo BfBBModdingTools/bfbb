@@ -10,12 +10,14 @@
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms)]
 
-#[cfg(feature = "game-interface")]
-pub mod game_interface;
-
-mod level;
 pub use level::Level;
-mod spatula;
 pub use spatula::Spatula;
 
 pub use strum::{EnumCount, IntoEnumIterator};
+
+#[cfg(feature = "game-interface")]
+pub mod game_interface;
+
+pub mod game_state;
+mod level;
+mod spatula;

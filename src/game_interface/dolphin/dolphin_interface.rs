@@ -1,11 +1,13 @@
-use super::DataMember;
-use crate::game_interface::{GameInterface, InterfaceError, InterfaceResult};
-use crate::{Level, Spatula};
-
 use log::{debug, error, trace};
 use process_memory::{Memory, ProcessHandle, TryIntoProcessHandle};
 use sysinfo::{ProcessExt, System, SystemExt};
 use thiserror::Error;
+
+use crate::game_interface::{GameInterface, InterfaceError, InterfaceResult};
+use crate::game_state::{GameMode, GameOstrich, GameState};
+use crate::{Level, Spatula};
+
+use super::DataMember;
 
 const REGION_SIZE: usize = 0x2000000;
 
@@ -94,7 +96,9 @@ impl DolphinInterface {
 }
 
 const LOADING_ADDRESS: usize = 0x803CB7B0;
-const WHEREAMI_ADDRESS: usize = 0x803CB8A8;
+const GAME_STATE_ADDRESS: usize = 0x803CAB43;
+const GAME_MODE_ADDRESS: usize = 0x803CB8AB;
+const GAME_OSTRICH_ADDRESS: usize = 0x803CB8AF;
 const POWERS_ADDRESS: usize = 0x803C0F17;
 const SCENE_PTR_ADDRESS: usize = 0x803C2518;
 const SPATULA_COUNT_ADDRESS: usize = 0x803C205C;
@@ -105,65 +109,69 @@ const LAB_DOOR_ADDRESS: usize = 0x804F6CB8;
 //       every time we interact with the game.
 impl GameInterface for DolphinInterface {
     fn is_loading(&self) -> InterfaceResult<bool> {
-        let ptr = DataMember::<u32>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![LOADING_ADDRESS],
-        );
+        let ptr = self.get_ptr(vec![LOADING_ADDRESS])?;
         Ok(u32::from_be(ptr.read()?) != 0)
     }
 
     fn start_new_game(&self) -> InterfaceResult<()> {
-        let ptr = DataMember::<u32>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![WHEREAMI_ADDRESS],
-        );
-        ptr.write(&12u32.to_be())?;
+        let ptr = self.get_ptr(vec![GAME_MODE_ADDRESS])?;
+        ptr.write(&GameMode::Game)?;
         Ok(())
     }
 
     fn unlock_powers(&self) -> InterfaceResult<()> {
-        let ptr = DataMember::<[u8; 2]>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![POWERS_ADDRESS],
-        );
+        let ptr = self.get_ptr(vec![POWERS_ADDRESS])?;
         ptr.write(&[1, 1])?;
         Ok(())
     }
 
-    fn get_current_level(&self) -> InterfaceResult<Level> {
-        let ptr = DataMember::<[u8; 4]>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![SCENE_PTR_ADDRESS, 0],
-        );
+    fn get_current_game_mode(&self) -> InterfaceResult<GameMode> {
+        let ptr = self.get_ptr(vec![GAME_MODE_ADDRESS])?;
+        Ok(ptr.read()?)
+    }
 
+    fn set_game_mode(&self, new_mode: GameMode) -> InterfaceResult<()> {
+        let ptr = self.get_ptr(vec![GAME_MODE_ADDRESS])?;
+        ptr.write(&new_mode)?;
+        Ok(())
+    }
+
+    fn get_current_game_ostrich(&self) -> InterfaceResult<GameOstrich> {
+        let ptr = self.get_ptr(vec![GAME_OSTRICH_ADDRESS])?;
+        Ok(ptr.read()?)
+    }
+
+    fn get_current_game_state(&self) -> InterfaceResult<GameState> {
+        let ptr = self.get_ptr(vec![GAME_STATE_ADDRESS])?;
+        Ok(ptr.read()?)
+    }
+
+    fn set_game_state(&self, new_state: GameState) -> InterfaceResult<()> {
+        let ptr = self.get_ptr(vec![GAME_STATE_ADDRESS])?;
+        ptr.write(&new_state)?;
+        Ok(())
+    }
+
+    fn get_current_level(&self) -> InterfaceResult<Level> {
+        let ptr = self.get_ptr::<[u8; 4]>(vec![SCENE_PTR_ADDRESS, 0])?;
+
+        // This address is a multicharacter literal, so we don't need to convert endianness
         ptr.read()?.try_into().map_err(|_| InterfaceError::Other)
     }
 
     fn get_spatula_count(&self) -> InterfaceResult<u32> {
-        let ptr = DataMember::<u32>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![SPATULA_COUNT_ADDRESS],
-        );
+        let ptr = self.get_ptr(vec![SPATULA_COUNT_ADDRESS])?;
 
         Ok(u32::from_be(ptr.read()?))
     }
 
     fn set_spatula_count(&self, value: u32) -> InterfaceResult<()> {
-        let ptr = DataMember::<u32>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![SPATULA_COUNT_ADDRESS],
-        );
+        let ptr = self.get_ptr(vec![SPATULA_COUNT_ADDRESS])?;
         ptr.write(&value.to_be())?;
         Ok(())
     }
 
-    fn mark_task_complete(&self, spatula: Spatula) -> InterfaceResult<()> {
+    fn unlock_task(&self, spatula: Spatula) -> InterfaceResult<()> {
         let (world_idx, idx) = spatula.into();
 
         let handle = self.handle.ok_or(InterfaceError::Unhooked)?;
@@ -175,11 +183,7 @@ impl GameInterface for DolphinInterface {
         base += idx as usize * 0x48;
         base += 0x14;
 
-        let ptr = DataMember::<u16>::new_offset(
-            handle,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![base, 0x14],
-        );
+        let ptr = self.get_ptr(vec![base, 0x14])?;
         ptr.write(&2u16.to_be())?;
         Ok(())
     }
@@ -187,8 +191,6 @@ impl GameInterface for DolphinInterface {
     fn is_task_complete(&self, spatula: Spatula) -> InterfaceResult<bool> {
         let (world_idx, idx) = spatula.into();
 
-        let handle = self.handle.ok_or(InterfaceError::Unhooked)?;
-
         // TODO: reduce magic numbers
         let mut base = SWORLD_BASE;
         base += world_idx as usize * 0x24C;
@@ -196,11 +198,7 @@ impl GameInterface for DolphinInterface {
         base += idx as usize * 0x48;
         base += 0x14;
 
-        let ptr = DataMember::<u16>::new_offset(
-            handle,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![base, 0x14],
-        );
+        let ptr = self.get_ptr(vec![base, 0x14])?;
         Ok(u16::from_be(ptr.read()?) == 2)
     }
 
@@ -212,7 +210,6 @@ impl GameInterface for DolphinInterface {
         if current_level != Some(spatula.get_level()) {
             return Ok(());
         }
-        let handle = self.handle.ok_or(InterfaceError::Unhooked)?;
 
         // TODO: reduce magic numbers
         let offset = match spatula.get_offset() {
@@ -225,16 +222,8 @@ impl GameInterface for DolphinInterface {
             return Ok(());
         }
 
-        let ptr_flags = DataMember::<u8>::new_offset(
-            handle,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x18],
-        );
-        let ptr_state = DataMember::<u32>::new_offset(
-            handle,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x16C],
-        );
+        let ptr_flags = self.get_ptr::<u8>(vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x18])?;
+        let ptr_state = self.get_ptr::<u32>(vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x16C])?;
 
         let mut flags = ptr_flags.read()?;
         flags &= !1; // Disable the entity
@@ -258,7 +247,6 @@ impl GameInterface for DolphinInterface {
         if current_level != Some(spatula.get_level()) {
             return Ok(false);
         }
-        let handle = self.handle.ok_or(InterfaceError::Unhooked)?;
 
         // TODO: reduce magic numbers
         let offset = match spatula.get_offset() {
@@ -266,11 +254,7 @@ impl GameInterface for DolphinInterface {
             None => return Ok(false),
         };
 
-        let ptr = DataMember::<u32>::new_offset(
-            handle,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x16C],
-        );
+        let ptr = self.get_ptr(vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x16C])?;
 
         Ok(u32::from_be(ptr.read()?) & 4 != 0)
     }
@@ -280,16 +264,22 @@ impl GameInterface for DolphinInterface {
             return Ok(());
         }
 
-        let ptr = DataMember::<u32>::new_offset(
-            self.handle.ok_or(InterfaceError::Unhooked)?,
-            self.base_address.ok_or(InterfaceError::Unhooked)?,
-            vec![LAB_DOOR_ADDRESS],
-        );
+        let ptr = self.get_ptr(vec![LAB_DOOR_ADDRESS])?;
 
         // The game uses a greater than check so we need to subtract by one
         let cost = value - 1;
         ptr.write(&cost.to_be())?;
         Ok(())
+    }
+}
+
+impl DolphinInterface {
+    fn get_ptr<T>(&self, offsets: Vec<usize>) -> InterfaceResult<DataMember<T>> {
+        Ok(DataMember::new_offset(
+            self.handle.ok_or(InterfaceError::Unhooked)?,
+            self.base_address.ok_or(InterfaceError::Unhooked)?,
+            offsets,
+        ))
     }
 }
 
