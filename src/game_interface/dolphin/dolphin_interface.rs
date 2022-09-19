@@ -120,7 +120,7 @@ impl GameInterface for DolphinInterface {
     }
 
     fn unlock_powers(&self) -> InterfaceResult<()> {
-        let ptr = self.get_ptr(vec![POWERS_ADDRESS])?;
+        let ptr = self.get_ptr::<[u8; 2]>(vec![POWERS_ADDRESS])?;
         ptr.write(&[1, 1])?;
         Ok(())
     }
