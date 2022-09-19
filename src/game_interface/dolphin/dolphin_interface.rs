@@ -174,7 +174,24 @@ impl GameInterface for DolphinInterface {
     fn unlock_task(&self, spatula: Spatula) -> InterfaceResult<()> {
         let (world_idx, idx) = spatula.into();
 
-        let handle = self.handle.ok_or(InterfaceError::Unhooked)?;
+        // TODO: reduce magic numbers
+        let mut base = SWORLD_BASE;
+        base += world_idx as usize * 0x24C;
+        base += 0xC;
+        base += idx as usize * 0x48;
+        base += 0x14;
+
+        let ptr = self.get_ptr(vec![base, 0x14])?;
+
+        let curr = i16::from_be(ptr.read()?);
+        if curr != 2 {
+            ptr.write(&1i16.to_be())?;
+        }
+        Ok(())
+    }
+
+    fn mark_task_complete(&self, spatula: Spatula) -> InterfaceResult<()> {
+        let (world_idx, idx) = spatula.into();
 
         // TODO: reduce magic numbers
         let mut base = SWORLD_BASE;
@@ -184,7 +201,7 @@ impl GameInterface for DolphinInterface {
         base += 0x14;
 
         let ptr = self.get_ptr(vec![base, 0x14])?;
-        ptr.write(&2u16.to_be())?;
+        ptr.write(&2i16.to_be())?;
         Ok(())
     }
 
@@ -199,7 +216,7 @@ impl GameInterface for DolphinInterface {
         base += 0x14;
 
         let ptr = self.get_ptr(vec![base, 0x14])?;
-        Ok(u16::from_be(ptr.read()?) == 2)
+        Ok(i16::from_be(ptr.read()?) == 2)
     }
 
     fn collect_spatula(
