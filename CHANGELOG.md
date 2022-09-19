@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0]
+## [0.2.1] - 2022-09-22
+
+- Fixed `DolphinInterface::unlock_powers` writing values of the wrong size.
+
+## [0.2.0] - 2022-09-22
 
 - Added functions for manipulating game state.
 - Added function for unlocking a task.
