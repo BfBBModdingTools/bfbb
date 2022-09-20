@@ -1,14 +1,28 @@
 # BfBB
-BfBB is a library intended for creating tools capable of directly interacting with
-*SpongeBob SquarePants: Battle for Bikini Bottom*
+
+A library intended for creating tools capable of directly interacting with
+_SpongeBob SquarePants: Battle for Bikini Bottom_
+
+[![Crates.io][crates-badge]][crates-url]
+[![Docs.rs][docs-badge]][docs-url]
+[![Build Status][actions-badge]][actions-url]
+
+[crates-badge]: https://img.shields.io/crates/v/bfbb.svg
+[crates-url]: https://crates.io/crates/bfbb
+[docs-badge]: https://img.shields.io/docsrs/bfbb/latest
+[docs-url]: https://docs.rs/bfbb
+[actions-badge]: https://github.com/BfBBModdingTools/bfbb/actions/workflows/ci.yml/badge.svg
+[actions-url]: https://github.com/BfBBModdingTools/bfbb/actions/workflows/ci.yml
 
 ## Compatibility
+
 This library currently only supports directly interacting with the GameCube version
 of the game, running in Dolphin Emulator on Windows or Linux. More platforms will
 be added over time.
 
 ## Example Projects
-* [BfBB Clash](https://github.com/999gary/BfBB-Clash) - A realtime multi-player mod
+
+- [BfBB Clash](https://github.com/999gary/BfBB-Clash) - A realtime multi-player mod
 
 #### License
 
