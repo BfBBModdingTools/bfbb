@@ -20,6 +20,8 @@ jobs:
           override: true
       - name: Add rustup components
         run: rustup component add rustfmt && rustup component add clippy
+      - name: Setup build cache
+        uses: Swatinem/rust-cache@v2
       - name: Check code formatting
         uses: actions-rs/cargo@v1
         with:
