@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2022-09-22
 
+### Fixed
+
 - Fixed `DolphinInterface::unlock_powers` writing values of the wrong size.
 
 ## [0.2.0] - 2022-09-22
+
+### Additions
 
 - Added functions for manipulating game state.
 - Added function for unlocking a task.
@@ -20,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial Release
 
-[unreleased]: https://github.com/BfBBModdingTools/bfbb/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/BfBBModdingTools/bfbb/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/BfBBModdingTools/bfbb/releases/tag/v0.2.1
 [0.2.0]: https://github.com/BfBBModdingTools/bfbb/releases/tag/v0.2.0
 [0.1.0]: https://github.com/BfBBModdingTools/bfbb/releases/tag/v0.1.0
