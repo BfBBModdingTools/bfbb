@@ -3,12 +3,11 @@
 //! See also: [decomp](https://github.com/bfbbdecomp/bfbb/blob/master/src/Game/zGameState.h)
 
 use bytemuck::CheckedBitPattern;
-use strum::EnumCount;
 use strum_macros::EnumCount;
 
 /// While unsure what the name actually means, this enum is primarily useful for checking if
 /// we're in a scene or not.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, EnumCount)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, EnumCount, CheckedBitPattern)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[repr(u8)]
 pub enum GameOstrich {
@@ -23,7 +22,7 @@ pub enum GameOstrich {
 }
 
 /// More macro-level game state.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, EnumCount)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, EnumCount, CheckedBitPattern)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[repr(u8)]
 pub enum GameMode {
@@ -69,7 +68,7 @@ pub enum GameMode {
 }
 
 /// Used mostly for tracking states during gameplay.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, EnumCount)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, EnumCount, CheckedBitPattern)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[repr(u8)]
 pub enum GameState {
@@ -90,31 +89,4 @@ pub enum GameState {
     Dead = 6,
     /// Transitioning to this state will cause the game to return to the main menu.
     Exit = 7,
-}
-
-unsafe impl CheckedBitPattern for GameOstrich {
-    type Bits = u8;
-
-    fn is_valid_bit_pattern(bits: &Self::Bits) -> bool {
-        // SAFETY: GameOstrich is repr(u8) and contains valid values starting from 0.
-        (0..GameOstrich::COUNT as u8).contains(bits)
-    }
-}
-
-unsafe impl CheckedBitPattern for GameMode {
-    type Bits = u8;
-
-    fn is_valid_bit_pattern(bits: &Self::Bits) -> bool {
-        // SAFETY: GameMode is repr(u8) and contains valid values starting from 0.
-        (0..GameMode::COUNT as u8).contains(bits)
-    }
-}
-
-unsafe impl CheckedBitPattern for GameState {
-    type Bits = u8;
-
-    fn is_valid_bit_pattern(bits: &Self::Bits) -> bool {
-        // SAFETY: GameState is repr(u8) and contains valid values starting from 0.
-        (0..GameState::COUNT as u8).contains(bits)
-    }
 }
