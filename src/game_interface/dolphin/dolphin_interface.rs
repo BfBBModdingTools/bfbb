@@ -7,7 +7,7 @@ use crate::game_interface::{GameInterface, InterfaceError, InterfaceResult};
 use crate::game_state::{GameMode, GameOstrich, GameState};
 use crate::{Level, Spatula};
 
-use super::DataMember;
+use super::data_member::{CheckedMemory, DataMember};
 
 const REGION_SIZE: usize = 0x2000000;
 
@@ -110,7 +110,7 @@ const LAB_DOOR_ADDRESS: usize = 0x804F6CB8;
 impl GameInterface for DolphinInterface {
     fn is_loading(&self) -> InterfaceResult<bool> {
         let ptr = self.get_ptr(vec![LOADING_ADDRESS])?;
-        Ok(u32::from_be(ptr.read()?) != 0)
+        Ok(u32::from_be(ptr.checked_read()?) != 0)
     }
 
     fn start_new_game(&self) -> InterfaceResult<()> {
@@ -127,7 +127,7 @@ impl GameInterface for DolphinInterface {
 
     fn get_current_game_mode(&self) -> InterfaceResult<GameMode> {
         let ptr = self.get_ptr(vec![GAME_MODE_ADDRESS])?;
-        Ok(ptr.read()?)
+        Ok(ptr.checked_read()?)
     }
 
     fn set_game_mode(&self, new_mode: GameMode) -> InterfaceResult<()> {
@@ -138,12 +138,12 @@ impl GameInterface for DolphinInterface {
 
     fn get_current_game_ostrich(&self) -> InterfaceResult<GameOstrich> {
         let ptr = self.get_ptr(vec![GAME_OSTRICH_ADDRESS])?;
-        Ok(ptr.read()?)
+        Ok(ptr.checked_read()?)
     }
 
     fn get_current_game_state(&self) -> InterfaceResult<GameState> {
         let ptr = self.get_ptr(vec![GAME_STATE_ADDRESS])?;
-        Ok(ptr.read()?)
+        Ok(ptr.checked_read()?)
     }
 
     fn set_game_state(&self, new_state: GameState) -> InterfaceResult<()> {
@@ -156,13 +156,15 @@ impl GameInterface for DolphinInterface {
         let ptr = self.get_ptr::<[u8; 4]>(vec![SCENE_PTR_ADDRESS, 0])?;
 
         // This address is a multicharacter literal, so we don't need to convert endianness
-        ptr.read()?.try_into().map_err(|_| InterfaceError::Other)
+        ptr.checked_read()?
+            .try_into()
+            .map_err(|_| InterfaceError::Other)
     }
 
     fn get_spatula_count(&self) -> InterfaceResult<u32> {
         let ptr = self.get_ptr(vec![SPATULA_COUNT_ADDRESS])?;
 
-        Ok(u32::from_be(ptr.read()?))
+        Ok(u32::from_be(ptr.checked_read()?))
     }
 
     fn set_spatula_count(&self, value: u32) -> InterfaceResult<()> {
@@ -183,7 +185,7 @@ impl GameInterface for DolphinInterface {
 
         let ptr = self.get_ptr(vec![base, 0x14])?;
 
-        let curr = i16::from_be(ptr.read()?);
+        let curr = i16::from_be(ptr.checked_read()?);
         if curr != 2 {
             ptr.write(&1i16.to_be())?;
         }
@@ -216,7 +218,7 @@ impl GameInterface for DolphinInterface {
         base += 0x14;
 
         let ptr = self.get_ptr(vec![base, 0x14])?;
-        Ok(i16::from_be(ptr.read()?) == 2)
+        Ok(i16::from_be(ptr.checked_read()?) == 2)
     }
 
     fn collect_spatula(
@@ -242,11 +244,11 @@ impl GameInterface for DolphinInterface {
         let ptr_flags = self.get_ptr::<u8>(vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x18])?;
         let ptr_state = self.get_ptr::<u32>(vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x16C])?;
 
-        let mut flags = ptr_flags.read()?;
+        let mut flags = ptr_flags.checked_read()?;
         flags &= !1; // Disable the entity
 
         // Set some model flags
-        let mut state = u32::from_be(ptr_state.read()?);
+        let mut state = u32::from_be(ptr_state.checked_read()?);
         state |= 8;
         state &= !4;
         state &= !2;
@@ -273,7 +275,7 @@ impl GameInterface for DolphinInterface {
 
         let ptr = self.get_ptr(vec![SCENE_PTR_ADDRESS, 0x78, offset, 0x16C])?;
 
-        Ok(u32::from_be(ptr.read()?) & 4 != 0)
+        Ok(u32::from_be(ptr.checked_read()?) & 4 != 0)
     }
 
     fn set_lab_door(&self, value: u32, current_level: Option<Level>) -> InterfaceResult<()> {

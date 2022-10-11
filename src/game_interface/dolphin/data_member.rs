@@ -30,7 +30,21 @@ impl<T> DataMember<T> {
     }
 }
 
-impl<T: CheckedBitPattern> Memory<T> for DataMember<T> {
+pub unsafe trait CheckedMemory<T>: Memory<T> {
+    fn checked_read(&self) -> std::io::Result<T>;
+}
+
+impl<T: Copy> DataMember<T> {
+    /// Read the pointed at value into a byte buffer and return it as-is.
+    fn read_bytes(&self) -> std::io::Result<Vec<u8>> {
+        let offset = self.get_offset()?;
+        let mut buffer = vec![0u8; std::mem::size_of::<T>()];
+        self.process.copy_address(offset, &mut buffer)?;
+        Ok(buffer)
+    }
+}
+
+impl<T: Copy> Memory<T> for DataMember<T> {
     fn set_offset(&mut self, new_offsets: Vec<usize>) {
         self.offsets = new_offsets;
     }
@@ -68,16 +82,9 @@ impl<T: CheckedBitPattern> Memory<T> for DataMember<T> {
     }
 
     /// Returned value will be big endian!
-    fn read(&self) -> std::io::Result<T> {
-        use std::io::{Error, ErrorKind};
-        let offset = self.get_offset()?;
-
-        let mut buffer = vec![0u8; std::mem::size_of::<T>()];
-        self.process.copy_address(offset, &mut buffer)?;
-
-        let val = bytemuck::checked::try_from_bytes(&buffer[..])
-            .map_err(|_| Error::from(ErrorKind::InvalidData))?;
-        Ok(*val)
+    unsafe fn read(&self) -> std::io::Result<T> {
+        let buffer = self.read_bytes()?;
+        Ok((buffer.as_ptr() as *const T).read_unaligned())
     }
 
     /// `value` is expected to be big endian.
@@ -87,5 +94,16 @@ impl<T: CheckedBitPattern> Memory<T> for DataMember<T> {
         let buffer =
             unsafe { slice::from_raw_parts(value as *const _ as _, std::mem::size_of::<T>()) };
         self.process.put_address(offset, buffer)
+    }
+}
+
+/// SAFETY: `T` is `CheckedBitPattern` so we can ensure the encountered bit pattern is valid before
+/// converting it to `T`
+unsafe impl<T: CheckedBitPattern> CheckedMemory<T> for DataMember<T> {
+    fn checked_read(&self) -> std::io::Result<T> {
+        let buffer = self.read_bytes()?;
+        let val = bytemuck::checked::try_from_bytes(&buffer[..])
+            .map_err(|_| std::io::ErrorKind::InvalidData)?;
+        Ok(*val)
     }
 }
