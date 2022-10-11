@@ -30,7 +30,8 @@ impl<T> DataMember<T> {
     }
 }
 
-pub unsafe trait CheckedMemory<T>: Memory<T> {
+/// Provides a safe variant of `Memory::read` that will fail if it encounters an invalid bit-pattern
+pub trait CheckedMemory<T>: Memory<T> {
     fn checked_read(&self) -> std::io::Result<T>;
 }
 
@@ -97,9 +98,7 @@ impl<T: Copy> Memory<T> for DataMember<T> {
     }
 }
 
-/// SAFETY: `T` is `CheckedBitPattern` so we can ensure the encountered bit pattern is valid before
-/// converting it to `T`
-unsafe impl<T: CheckedBitPattern> CheckedMemory<T> for DataMember<T> {
+impl<T: CheckedBitPattern> CheckedMemory<T> for DataMember<T> {
     fn checked_read(&self) -> std::io::Result<T> {
         let buffer = self.read_bytes()?;
         let val = bytemuck::checked::try_from_bytes(&buffer[..])
