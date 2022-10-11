@@ -7,7 +7,7 @@
 //!
 //! `game-interface`: Enables the [`game_interface`] module.
 //!
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
 
 pub use level::Level;

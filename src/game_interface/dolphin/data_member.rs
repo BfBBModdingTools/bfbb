@@ -1,5 +1,9 @@
+use std::borrow::Cow;
+
 use bytemuck::CheckedBitPattern;
 use process_memory::{Architecture, CopyAddress, Memory, ProcessHandle, PutAddress};
+
+use crate::game_state::{GameMode, GameOstrich, GameState};
 
 const GCN_BASE_ADDRESS: usize = 0x80000000;
 
@@ -7,7 +11,7 @@ const GCN_BASE_ADDRESS: usize = 0x80000000;
 /// meant for reading/writing to emulated GameCube memory within Dolphin.
 ///
 /// Offsets are constructed as if they were in the GameCube's memory space.
-pub struct DataMember<T> {
+pub(crate) struct DataMember<T> {
     offsets: Vec<usize>,
     process: ProcessHandle,
     emulated_region_address: usize,
@@ -35,17 +39,20 @@ pub trait CheckedMemory<T>: Memory<T> {
     fn checked_read(&self) -> std::io::Result<T>;
 }
 
-impl<T: Copy> DataMember<T> {
+impl<T: Copy + EndianAware> DataMember<T> {
     /// Read the pointed at value into a byte buffer and return it as-is.
     fn read_bytes(&self) -> std::io::Result<Vec<u8>> {
         let offset = self.get_offset()?;
         let mut buffer = vec![0u8; std::mem::size_of::<T>()];
         self.process.copy_address(offset, &mut buffer)?;
+        if T::NEEDS_SWAP {
+            buffer.reverse();
+        }
         Ok(buffer)
     }
 }
 
-impl<T: Copy> Memory<T> for DataMember<T> {
+impl<T: Copy + EndianAware> Memory<T> for DataMember<T> {
     fn set_offset(&mut self, new_offsets: Vec<usize>) {
         self.offsets = new_offsets;
     }
@@ -82,27 +89,50 @@ impl<T: Copy> Memory<T> for DataMember<T> {
         Ok(offset)
     }
 
-    /// Returned value will be big endian!
     unsafe fn read(&self) -> std::io::Result<T> {
         let buffer = self.read_bytes()?;
         Ok((buffer.as_ptr() as *const T).read_unaligned())
     }
 
-    /// `value` is expected to be big endian.
     fn write(&self, value: &T) -> std::io::Result<()> {
         use std::slice;
         let offset = self.get_offset()?;
-        let buffer =
-            unsafe { slice::from_raw_parts(value as *const _ as _, std::mem::size_of::<T>()) };
-        self.process.put_address(offset, buffer)
+        let mut buffer = Cow::Borrowed(unsafe {
+            slice::from_raw_parts(value as *const _ as _, std::mem::size_of::<T>())
+        });
+        if T::NEEDS_SWAP {
+            buffer.to_mut().reverse();
+        }
+        self.process.put_address(offset, &buffer)
     }
 }
 
-impl<T: CheckedBitPattern> CheckedMemory<T> for DataMember<T> {
+impl<T: CheckedBitPattern + EndianAware> CheckedMemory<T> for DataMember<T> {
     fn checked_read(&self) -> std::io::Result<T> {
         let buffer = self.read_bytes()?;
         let val = bytemuck::checked::try_from_bytes(&buffer[..])
             .map_err(|_| std::io::ErrorKind::InvalidData)?;
         Ok(*val)
     }
+}
+
+pub trait EndianAware {
+    const NEEDS_SWAP: bool;
+}
+
+macro_rules! impl_aware {
+    ( false: $( $f:ty ),*; true: $( $t:ty ),* )=> {
+        $( impl_aware!(false, $f); )*
+        $( impl_aware!(true,  $t); )*
+    };
+    ( $needs_swap:expr, $typ:ty) => {
+        impl EndianAware for $typ {
+            const NEEDS_SWAP: bool = $needs_swap;
+        }
+    };
+}
+
+impl_aware!(false: bool, u8, GameMode, GameState, GameOstrich; true: i16, u32);
+impl<const N: usize> EndianAware for [u8; N] {
+    const NEEDS_SWAP: bool = false;
 }

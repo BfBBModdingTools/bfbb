@@ -6,9 +6,14 @@ license = "MIT OR Apache-2.0"
 description = "Library for interacting with SpongeBob SquarePants: Battle for Bikini Bottom"
 repository = "https://github.com/BfBBModdingTools/bfbb"
 keywords = ["spongebob", "bfbb"]
+rust-version = "1.65"
 
 [package.metadata.docs.rs]
 all-features = true
+
+[[example]]
+name = "game-interface"
+required-features = ["game-interface"]
 
 [features]
 game-interface = [
