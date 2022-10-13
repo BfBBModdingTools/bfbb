@@ -5,6 +5,7 @@ use process_memory::{Memory, ProcessHandle};
 use strum::IntoEnumIterator;
 
 use crate::{
+    endian::EndianAware,
     game_interface::{
         game_var::{GameVar, GameVarFamily, GameVarMut},
         GameInterface, InterfaceResult, Task, Tasks,
@@ -12,7 +13,7 @@ use crate::{
     Spatula,
 };
 
-use super::data_member::{CheckedMemory, DataMember, EndianAware};
+use super::data_member::{CheckedMemory, DataMember};
 
 /// Dolphin implementation for [`GameVarFamily`]
 pub struct DolphinVarFamily;

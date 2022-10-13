@@ -6,7 +6,6 @@ use thiserror::Error;
 
 use crate::game_interface::{GameInterface, InterfaceError};
 
-pub use self::data_member::EndianAware;
 use self::dolphin_var::DolphinVarFamily;
 
 mod data_member;

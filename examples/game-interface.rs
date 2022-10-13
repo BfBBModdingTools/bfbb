@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // We don't yet have a real second interface so we'll use a mock.
     // Pretend this is an implementation for an Xemu-based GameInterface
-    let mut xemu_interface = GameInterface::<MockVarFamily>::new();
+    let mut xemu_interface = GameInterface::<MockVarFamily>::default();
 
     println!("Dolphin:");
     takes_generic_and_sets_spatula_count(dol_interface, 16)?;

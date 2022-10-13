@@ -18,6 +18,7 @@ pub use strum::{EnumCount, IntoEnumIterator};
 #[cfg(feature = "game-interface")]
 pub mod game_interface;
 
+mod endian;
 pub mod game_state;
 mod level;
 mod spatula;

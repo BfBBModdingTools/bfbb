@@ -8,8 +8,8 @@ use bytemuck::CheckedBitPattern;
 use strum::IntoEnumIterator;
 
 use crate::{
+    endian::EndianAware,
     game_interface::{
-        dolphin::EndianAware,
         game_var::{GameVar, GameVarFamily, GameVarMut},
         GameInterface, Task, Tasks,
     },

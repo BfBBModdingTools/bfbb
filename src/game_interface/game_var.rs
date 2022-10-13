@@ -14,7 +14,9 @@
 
 use bytemuck::CheckedBitPattern;
 
-use super::{dolphin::EndianAware, InterfaceResult};
+use crate::endian::EndianAware;
+
+use super::InterfaceResult;
 
 /// Allows accessing the value of variable within BfBB
 pub trait GameVar {
