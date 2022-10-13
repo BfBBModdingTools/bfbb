@@ -23,12 +23,20 @@ pub trait GameVar {
     /// The underlying type of this variable.
     type T;
     /// Attempt to get value of this variable.
+    ///
+    /// # Errors
+    ///
+    /// May return an [`InterfaceError`](super::InterfaceError) if the value can not be read.
     fn get(&self) -> InterfaceResult<Self::T>;
 }
 
 /// Allows mutating a variable within BfBB
 pub trait GameVarMut: GameVar {
     /// Attempt to set the value of this variable.
+    ///
+    /// # Errors
+    ///
+    /// May return an [`InterfaceError`](super::InterfaceError) if the value can not be read.
     fn set(&mut self, value: Self::T) -> InterfaceResult<()>;
 }
 
@@ -49,8 +57,8 @@ pub trait GameVarMut: GameVar {
 /// }
 /// ```
 pub trait GameVarFamily {
-    /// Type constructor for an immutable GameVar
+    /// Type constructor for an immutable [`GameVar`]
     type Var<T: CheckedBitPattern + EndianAware>: GameVar<T = T>;
-    /// Type constructor for a mutable GameVar
+    /// Type constructor for a mutable [`GameVar`]
     type Mut<T: CheckedBitPattern + EndianAware>: GameVarMut<T = T>;
 }

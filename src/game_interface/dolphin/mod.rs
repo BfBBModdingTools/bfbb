@@ -11,7 +11,7 @@ use self::dolphin_var::DolphinVarFamily;
 mod data_member;
 pub mod dolphin_var;
 
-const REGION_SIZE: usize = 0x2000000;
+const REGION_SIZE: usize = 0x200_0000;
 
 #[cfg(target_os = "linux")]
 const PROCESS_NAME: &str = "dolphin-emu";
@@ -68,7 +68,7 @@ enum DolphinState {
 impl Default for Dolphin {
     fn default() -> Self {
         Self {
-            system: Default::default(),
+            system: System::default(),
             state: DolphinState::Unhooked,
         }
     }
@@ -76,11 +76,16 @@ impl Default for Dolphin {
 
 impl Dolphin {
     /// Attempt to get a reference to the Dolphin interface, hooking if neccessary.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError::Unhooked`] if a hooking attempt is made and fails.
     pub fn get_interface(
         &mut self,
     ) -> Result<&mut GameInterface<DolphinVarFamily>, InterfaceError> {
         match self.state {
             DolphinState::Unhooked => {
+                // TODO: Probably should use a `HookFailed` error with information about why.
                 let interface = self.hook().map_err(|_| InterfaceError::Unhooked)?;
                 self.state = DolphinState::Hooked(interface);
                 match self.state {
@@ -118,7 +123,7 @@ impl Dolphin {
 
             // Convert sysinfo Pid (wrapper type) to process_memory Pid (platform specific alias)
             #[cfg(target_os = "windows")]
-            // Work around for sysinfo crate using usize on windows for Pids
+            // Work around for sysinfo crate using usize on Windows for Pids
             let pid = <sysinfo::Pid as Into<usize>>::into(pid) as u32;
 
             // This isn't uselss on *nix
@@ -207,7 +212,7 @@ fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
                 };
                 if QueryWorkingSetEx(
                     handle,
-                    &mut ws_info as *mut _ as *mut std::ffi::c_void,
+                    std::ptr::addr_of_mut!(ws_info).cast::<std::ffi::c_void>(),
                     std::mem::size_of::<PSAPI_WORKING_SET_EX_INFORMATION>()
                         .try_into()
                         .unwrap(),

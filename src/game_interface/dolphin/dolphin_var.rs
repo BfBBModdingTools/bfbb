@@ -58,14 +58,14 @@ impl<T: EndianAware + CheckedBitPattern> GameVarMut for DolphinVar<T> {
     }
 }
 
-const LOADING_ADDRESS: usize = 0x803CB7B3;
-const GAME_STATE_ADDRESS: usize = 0x803CAB43;
-const GAME_MODE_ADDRESS: usize = 0x803CB8AB;
-const GAME_OSTRICH_ADDRESS: usize = 0x803CB8AF;
-const POWERS_ADDRESS: usize = 0x803C0F17;
-const SCENE_PTR_ADDRESS: usize = 0x803C2518;
-const SPATULA_COUNT_ADDRESS: usize = 0x803C205C;
-const LAB_DOOR_ADDRESS: usize = 0x804F6CB8;
+const LOADING_ADDRESS: usize = 0x803C_B7B3;
+const GAME_STATE_ADDRESS: usize = 0x803C_AB43;
+const GAME_MODE_ADDRESS: usize = 0x803C_B8AB;
+const GAME_OSTRICH_ADDRESS: usize = 0x803C_B8AF;
+const POWERS_ADDRESS: usize = 0x803C_0F17;
+const SCENE_PTR_ADDRESS: usize = 0x803C_2518;
+const SPATULA_COUNT_ADDRESS: usize = 0x803C_205C;
+const LAB_DOOR_ADDRESS: usize = 0x804F_6CB8;
 
 impl GameInterface<DolphinVarFamily> {
     pub(crate) fn new(base_addr: usize, handle: ProcessHandle) -> Self {
@@ -83,7 +83,7 @@ impl GameInterface<DolphinVarFamily> {
     }
 }
 
-const SWORLD_BASE: usize = 0x802F63C8;
+const SWORLD_BASE: usize = 0x802F_63C8;
 impl Tasks<DolphinVarFamily> {
     pub(crate) fn new(base_addr: usize, handle: ProcessHandle) -> Self {
         const SIZE_OF_MENU_WORLD: usize = 0x24C;

@@ -18,7 +18,7 @@ pub mod dolphin;
 pub mod game_var;
 pub mod mock;
 
-/// Error type for failed [GameInterface] actions.
+/// Error type for failed [`GameInterface`] actions.
 ///
 /// This list is non-exhaustive and may grow over time.
 #[derive(Copy, Clone, Debug, Error)]
@@ -42,7 +42,7 @@ impl From<std::io::Error> for InterfaceError {
     }
 }
 
-/// Result type for [GameInterface] actions.
+/// Result type for [`GameInterface`] actions.
 pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
 /// Interact with BfBB in an abstract way.
 ///
@@ -51,7 +51,8 @@ pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
 ///
 /// NOTE: To a see a list of supported backends see the `Implementors` list of [`GameVarFamily`]
 ///
-/// This is the key struct of the [`game_interface`] module and enables interacting with the game.#[non_exhaustive]
+/// This is the key struct of the [`game_interface`](self) module and enables interacting with the game.
+#[non_exhaustive]
 pub struct GameInterface<F: GameVarFamily> {
     /// True while on loading screens
     pub is_loading: F::Var<bool>,
@@ -88,36 +89,56 @@ pub struct GameInterface<F: GameVarFamily> {
     pub tasks: Tasks<F>,
 
     // TODO: This value is on the heap, it shouldn't be global like this
-    pub(crate) lab_door_cost: F::Mut<u32>,
+    lab_door_cost: F::Mut<u32>,
 }
 
 impl<F: GameVarFamily> GameInterface<F> {
     /// Will start a new game when called. Only works when the player is on the main menu and not in the demo cutscene.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn start_new_game(&mut self) -> InterfaceResult<()> {
         self.game_mode.set(GameMode::Game)
     }
 
     /// Unlock the Bubble Bowl and Cruise Bubble
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
         self.initial_powers.set([1, 1])
     }
 
     /// Marks a task as available (Silver). This will not update an already unlocked task.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn unlock_task(&mut self, spatula: Spatula) -> InterfaceResult<()> {
         let task = &mut self.tasks[spatula];
         let curr = task.menu_count.get()?;
         if curr != 2 {
-            task.menu_count.set(1)?
+            task.menu_count.set(1)?;
         }
         Ok(())
     }
 
     /// Marks a spatula as "completed" in the pause menu. This has the effect of giving the player access to the task warp.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn mark_task_complete(&mut self, spatula: Spatula) -> InterfaceResult<()> {
         self.tasks[spatula].menu_count.set(2)
     }
 
     /// True when `spatula` is shown as gold in the pause menu.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn is_task_complete(&self, spatula: Spatula) -> InterfaceResult<bool> {
         Ok(self.tasks[spatula].menu_count.get()? == 2)
     }
@@ -125,9 +146,13 @@ impl<F: GameVarFamily> GameInterface<F> {
     /// Collect a spatula in the world. This only removes the entity, it will not complete the task or increment the spatula
     /// counter.
     ///
-    /// # Returns:
-    /// `Ok(())` for [Kah-Rah-Tae](Spatula::KahRahTae) and [The Small Shall Rule... Or Not](Spatula::TheSmallShallRuleOrNot)
+    /// *NOTE*: Will always return `Ok(false)` when `spatula` is located in a level other than `current_level` or when
+    /// `spatula` is [Kah-Rah-Tae](Spatula::KahRahTae) or [The Small Shall Rule... Or Not](Spatula::TheSmallShallRuleOrNot)
     /// without writing memory.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn collect_spatula(
         &mut self,
         spatula: Spatula,
@@ -158,8 +183,13 @@ impl<F: GameVarFamily> GameInterface<F> {
     }
 
     /// True when `spatula`'s collected animation is playing
-    /// # Returns:
-    /// `Ok(false)` for [Kah-Rah-Tae](Spatula::KahRahTae) and [The Small Shall Rule... Or Not](Spatula::TheSmallShallRuleOrNot)
+    ///
+    /// *NOTE*: Will always return `Ok(false)` when `spatula` is located in a level other than `current_level` or when
+    /// `spatula` is [Kah-Rah-Tae](Spatula::KahRahTae) or [The Small Shall Rule... Or Not](Spatula::TheSmallShallRuleOrNot)
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn is_spatula_being_collected(
         &self,
         spatula: Spatula,
@@ -178,6 +208,13 @@ impl<F: GameVarFamily> GameInterface<F> {
     }
 
     /// Changes the number of spatulas required to enter the Chum Bucket Lab.
+    ///
+    /// *NOTE*: This function requires that the current level is the Chum Bucket an will therefore always return `Ok(())`
+    /// if `current_level` is not `Some(Level::ChumBucket)`
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn set_lab_door(
         &mut self,
         value: u32,

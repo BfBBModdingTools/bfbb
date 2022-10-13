@@ -2,8 +2,6 @@
 //!
 //! This may be useful for testing logic against some known state.
 
-use std::collections::HashMap;
-
 use bytemuck::CheckedBitPattern;
 use strum::IntoEnumIterator;
 
@@ -43,16 +41,18 @@ impl Default for GameInterface<MockVarFamily> {
 impl Tasks<MockVarFamily> {
     fn new() -> Self {
         Self {
-            arr: HashMap::from_iter(Spatula::iter().map(|s| {
-                (
-                    s,
-                    Task {
-                        menu_count: MockVar::default(),
-                        flags: Some(MockVar::default()),
-                        state: Some(MockVar::default()),
-                    },
-                )
-            })),
+            arr: Spatula::iter()
+                .map(|s| {
+                    (
+                        s,
+                        Task {
+                            menu_count: MockVar::default(),
+                            flags: Some(MockVar::default()),
+                            state: Some(MockVar::default()),
+                        },
+                    )
+                })
+                .collect(),
         }
     }
 }

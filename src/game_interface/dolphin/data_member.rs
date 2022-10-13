@@ -5,7 +5,7 @@ use process_memory::{Architecture, CopyAddress, Memory, ProcessHandle, PutAddres
 
 use crate::endian::EndianAware;
 
-const GCN_BASE_ADDRESS: usize = 0x80000000;
+const GCN_BASE_ADDRESS: usize = 0x8000_0000;
 
 /// A specialized version of `DataMember` from the `process_memory` crate,
 /// meant for reading/writing to emulated GameCube memory within Dolphin.
@@ -91,14 +91,14 @@ impl<T: Copy + EndianAware> Memory<T> for DataMember<T> {
 
     unsafe fn read(&self) -> std::io::Result<T> {
         let buffer = self.read_bytes()?;
-        Ok((buffer.as_ptr() as *const T).read_unaligned())
+        Ok(buffer.as_ptr().cast::<T>().read_unaligned())
     }
 
     fn write(&self, value: &T) -> std::io::Result<()> {
         use std::slice;
         let offset = self.get_offset()?;
         let mut buffer = Cow::Borrowed(unsafe {
-            slice::from_raw_parts(value as *const _ as _, std::mem::size_of::<T>())
+            slice::from_raw_parts((value as *const T).cast(), std::mem::size_of::<T>())
         });
         if T::NEEDS_SWAP {
             buffer.to_mut().reverse();
