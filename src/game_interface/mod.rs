@@ -97,16 +97,30 @@ impl<F: GameVarFamily> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn start_new_game(&mut self) -> InterfaceResult<()> {
         self.game_mode.set(GameMode::Game)
+    }
+
+    /// Get the level that the player is currently in
+    ///
+    /// # Errors
+    ///
+    /// Will return an [`InterfaceError::Other`] sometimes when the game is loading due to the scene pointer being null
+    pub fn get_current_level(&self) -> InterfaceResult<Level> {
+        // TODO: It would be great to eventually allow self.scene_id to be of type `F::Var<Level>` directly and be able
+        //       to blanket impl `GameVar<T=Level>` for all backends by using an actual `GameVar<T=[u8;4]>` internally.
+        self.scene_id
+            .get()?
+            .try_into()
+            .map_err(|_| InterfaceError::Other)
     }
 
     /// Marks a task as available (Silver). This will not update an already unlocked task.
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn unlock_task(&mut self, spatula: Spatula) -> InterfaceResult<()> {
         let task = &mut self.tasks[spatula];
         let curr = task.menu_count.get()?;
@@ -120,7 +134,7 @@ impl<F: GameVarFamily> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn mark_task_complete(&mut self, spatula: Spatula) -> InterfaceResult<()> {
         self.tasks[spatula].menu_count.set(2)
     }
@@ -129,7 +143,7 @@ impl<F: GameVarFamily> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn is_task_complete(&self, spatula: Spatula) -> InterfaceResult<bool> {
         Ok(self.tasks[spatula].menu_count.get()? == 2)
     }
@@ -143,7 +157,7 @@ impl<F: GameVarFamily> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn collect_spatula(
         &mut self,
         spatula: Spatula,
@@ -180,7 +194,7 @@ impl<F: GameVarFamily> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn is_spatula_being_collected(
         &self,
         spatula: Spatula,
@@ -205,7 +219,7 @@ impl<F: GameVarFamily> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    /// Will return an [`InterfaceError`] if the implementation is unable to access the game.
     pub fn set_lab_door(
         &mut self,
         value: u32,
