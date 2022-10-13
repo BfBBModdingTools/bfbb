@@ -16,7 +16,7 @@ use crate::{
 use super::data_member::{CheckedMemory, DataMember};
 
 /// Dolphin implementation for [`GameVarFamily`]
-pub struct DolphinVarFamily;
+pub enum DolphinVarFamily {}
 impl GameVarFamily for DolphinVarFamily {
     type Var<T: CheckedBitPattern + EndianAware> = DolphinVar<T>;
     type Mut<T: CheckedBitPattern + EndianAware> = DolphinVar<T>;

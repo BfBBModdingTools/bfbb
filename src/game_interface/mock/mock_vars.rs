@@ -17,8 +17,8 @@ use crate::{
     Spatula,
 };
 
-/// A mock implemenation for [`GameVarFamily`]
-pub struct MockVarFamily;
+/// A mock implementation for [`GameVarFamily`]
+pub enum MockVarFamily {}
 impl GameVarFamily for MockVarFamily {
     type Var<T: CheckedBitPattern + EndianAware> = MockVar<T>;
     type Mut<T: CheckedBitPattern + EndianAware> = MockVar<T>;
