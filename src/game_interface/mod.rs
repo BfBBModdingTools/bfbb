@@ -65,7 +65,7 @@ pub struct GameInterface<F: GameVarFamily> {
     /// Not recommended to mutate this, but the option is available if you wish, it's probably not what you want to do.
     pub game_ostrich: F::Mut<GameOstrich>,
     /// Array for whether a new game should start with powers enabled. First element is the bubble-bowl and the second is the cruise-bubble.
-    pub initial_powers: F::Mut<[u8; 2]>,
+    pub powers: PowerUps<F>,
     /// Location of the ID for the current scene. Can be converted to a [`Level`](crate::Level) via [`TryFrom`].
     ///
     /// # Examples
@@ -100,15 +100,6 @@ impl<F: GameVarFamily> GameInterface<F> {
     /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
     pub fn start_new_game(&mut self) -> InterfaceResult<()> {
         self.game_mode.set(GameMode::Game)
-    }
-
-    /// Unlock the Bubble Bowl and Cruise Bubble
-    ///
-    /// # Errors
-    ///
-    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
-    pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
-        self.initial_powers.set([1, 1])
     }
 
     /// Marks a task as available (Silver). This will not update an already unlocked task.
@@ -278,5 +269,40 @@ impl<V: GameVarFamily> Index<Spatula> for Tasks<V> {
 impl<T: GameVarFamily> IndexMut<Spatula> for Tasks<T> {
     fn index_mut(&mut self, index: Spatula) -> &mut Self::Output {
         self.arr.get_mut(&index).unwrap()
+    }
+}
+
+/// [`GameVar`]s related to the bubble bowl and cruise-missile
+#[non_exhaustive]
+pub struct PowerUps<F: GameVarFamily> {
+    /// Whether the bubble bowl is currently unlocked
+    pub bubble_bowl: F::Mut<bool>,
+    /// Whether the cruise bubble is currently unlocked
+    pub cruise_bubble: F::Mut<bool>,
+    /// Whether new games should begin with the bubble bowl unlocked.
+    pub initial_bubble_bowl: F::Mut<bool>,
+    /// Whether new games should begin with the cruise missile
+    pub initial_cruise_bubble: F::Mut<bool>,
+}
+
+impl<F: GameVarFamily> PowerUps<F> {
+    /// Set whether a new game should start with powers or not (New Game+)
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    pub fn start_with_powers(&mut self, value: bool) -> InterfaceResult<()> {
+        self.initial_bubble_bowl.set(value)?;
+        self.initial_cruise_bubble.set(value)
+    }
+
+    /// Unlock the Bubble Bowl and Cruise Bubble for the current game.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
+        self.bubble_bowl.set(true)?;
+        self.cruise_bubble.set(true)
     }
 }

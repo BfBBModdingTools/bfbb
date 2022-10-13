@@ -8,7 +8,7 @@ use crate::{
     endian::EndianAware,
     game_interface::{
         game_var::{GameVar, GameVarFamily, GameVarMut},
-        GameInterface, InterfaceResult, Task, Tasks,
+        GameInterface, InterfaceResult, PowerUps, Task, Tasks,
     },
     Spatula,
 };
@@ -62,7 +62,6 @@ const LOADING_ADDRESS: usize = 0x803C_B7B3;
 const GAME_STATE_ADDRESS: usize = 0x803C_AB43;
 const GAME_MODE_ADDRESS: usize = 0x803C_B8AB;
 const GAME_OSTRICH_ADDRESS: usize = 0x803C_B8AF;
-const POWERS_ADDRESS: usize = 0x803C_0F17;
 const SCENE_PTR_ADDRESS: usize = 0x803C_2518;
 const SPATULA_COUNT_ADDRESS: usize = 0x803C_205C;
 const LAB_DOOR_ADDRESS: usize = 0x804F_6CB8;
@@ -74,7 +73,7 @@ impl GameInterface<DolphinVarFamily> {
             game_state: DolphinVar::new([GAME_STATE_ADDRESS], base_addr, handle),
             game_mode: DolphinVar::new([GAME_MODE_ADDRESS], base_addr, handle),
             game_ostrich: DolphinVar::new([GAME_OSTRICH_ADDRESS], base_addr, handle),
-            initial_powers: DolphinVar::new([POWERS_ADDRESS], base_addr, handle),
+            powers: PowerUps::new(base_addr, handle),
             scene_id: DolphinVar::new([SCENE_PTR_ADDRESS, 0], base_addr, handle),
             spatula_count: DolphinVar::new([SPATULA_COUNT_ADDRESS], base_addr, handle),
             tasks: Tasks::new(base_addr, handle),
@@ -85,7 +84,7 @@ impl GameInterface<DolphinVarFamily> {
 
 const SWORLD_BASE: usize = 0x802F_63C8;
 impl Tasks<DolphinVarFamily> {
-    pub(crate) fn new(base_addr: usize, handle: ProcessHandle) -> Self {
+    fn new(base_addr: usize, handle: ProcessHandle) -> Self {
         const SIZE_OF_MENU_WORLD: usize = 0x24C;
         const SIZE_OF_MENU_TASK: usize = 0x48;
 
@@ -113,5 +112,17 @@ impl Tasks<DolphinVarFamily> {
             })
             .collect();
         Self { arr }
+    }
+}
+
+const POWERS_ADDRESS: usize = 0x803C_0F15;
+impl PowerUps<DolphinVarFamily> {
+    fn new(base_addr: usize, handle: ProcessHandle) -> Self {
+        Self {
+            bubble_bowl: DolphinVar::new([POWERS_ADDRESS], base_addr, handle),
+            cruise_bubble: DolphinVar::new([POWERS_ADDRESS + 1], base_addr, handle),
+            initial_bubble_bowl: DolphinVar::new([POWERS_ADDRESS + 2], base_addr, handle),
+            initial_cruise_bubble: DolphinVar::new([POWERS_ADDRESS + 3], base_addr, handle),
+        }
     }
 }

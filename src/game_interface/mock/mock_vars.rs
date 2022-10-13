@@ -9,7 +9,7 @@ use crate::{
     endian::EndianAware,
     game_interface::{
         game_var::{GameVar, GameVarFamily, GameVarMut},
-        GameInterface, Task, Tasks,
+        GameInterface, PowerUps, Task, Tasks,
     },
     game_state::{GameMode, GameOstrich, GameState},
     Spatula,
@@ -29,10 +29,10 @@ impl Default for GameInterface<MockVarFamily> {
             game_state: MockVar::new(GameState::FirstTime),
             game_mode: MockVar::new(GameMode::Boot),
             game_ostrich: MockVar::new(GameOstrich::InScene),
-            initial_powers: MockVar::default(),
+            powers: PowerUps::new(),
             scene_id: MockVar::default(),
             spatula_count: MockVar::default(),
-            tasks: Tasks::<MockVarFamily>::new(),
+            tasks: Tasks::new(),
             lab_door_cost: MockVar::default(),
         }
     }
@@ -53,6 +53,17 @@ impl Tasks<MockVarFamily> {
                     )
                 })
                 .collect(),
+        }
+    }
+}
+
+impl PowerUps<MockVarFamily> {
+    fn new() -> Self {
+        Self {
+            bubble_bowl: MockVar::default(),
+            cruise_bubble: MockVar::default(),
+            initial_bubble_bowl: MockVar::default(),
+            initial_cruise_bubble: MockVar::default(),
         }
     }
 }
