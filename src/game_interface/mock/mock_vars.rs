@@ -1,4 +1,4 @@
-//! Implemenation of mock backend for [`GameInterface`]
+//! Implementation of a mock backend for [`GameInterface`]
 //!
 //! This may be useful for testing logic against some known state.
 
@@ -31,7 +31,7 @@ impl Default for GameInterface<MockVarFamily> {
             game_state: MockVar::new(GameState::FirstTime),
             game_mode: MockVar::new(GameMode::Boot),
             game_ostrich: MockVar::new(GameOstrich::InScene),
-            intial_powers: MockVar::default(),
+            initial_powers: MockVar::default(),
             scene_id: MockVar::default(),
             spatula_count: MockVar::default(),
             tasks: Tasks::<MockVarFamily>::new(),

@@ -74,7 +74,7 @@ impl GameInterface<DolphinVarFamily> {
             game_state: DolphinVar::new([GAME_STATE_ADDRESS], base_addr, handle),
             game_mode: DolphinVar::new([GAME_MODE_ADDRESS], base_addr, handle),
             game_ostrich: DolphinVar::new([GAME_OSTRICH_ADDRESS], base_addr, handle),
-            intial_powers: DolphinVar::new([POWERS_ADDRESS], base_addr, handle),
+            initial_powers: DolphinVar::new([POWERS_ADDRESS], base_addr, handle),
             scene_id: DolphinVar::new([SCENE_PTR_ADDRESS, 0], base_addr, handle),
             spatula_count: DolphinVar::new([SPATULA_COUNT_ADDRESS], base_addr, handle),
             tasks: Tasks::new(base_addr, handle),

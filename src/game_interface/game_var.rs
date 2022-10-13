@@ -18,7 +18,7 @@ use crate::endian::EndianAware;
 
 use super::InterfaceResult;
 
-/// Allows accessing the value of variable within BfBB
+/// Allows accessing the value of a variable within BfBB
 pub trait GameVar {
     /// The underlying type of this variable.
     type T;
@@ -32,7 +32,7 @@ pub trait GameVarMut: GameVar {
     fn set(&mut self, value: Self::T) -> InterfaceResult<()>;
 }
 
-/// A trait to create type constructors for [`GameVar`]s that are generic over an implementation
+/// A trait with type constructors for [`GameVar`]s that are generic over an implementation (backend).
 ///
 /// For [`GameInterface`](super::GameInterface) implementations, this trait should be implemented on a marker struct
 /// and provide its [`GameVar`] implementation to the type constructors. (See [`DolphinVarFamily`](crate::game_interface::dolphin::dolphin_var::DolphinVarFamily)).

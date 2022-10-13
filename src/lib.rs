@@ -1,5 +1,8 @@
 //! A library for creating tools and mods for *SpongeBob SquarePants: Battle for Bikini Bottom (2003)*.
 //!
+// TODO: Add docs here that introduce [`GameInterface`] as an entry-point to the library and give examples of how
+//       to get one.
+//!
 //! # Feature flags
 //! Some functionality is gated behind feature flags to allow you to pick and choose what functionality you need for your project.
 //!

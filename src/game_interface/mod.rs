@@ -46,8 +46,12 @@ impl From<std::io::Error> for InterfaceError {
 pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
 /// Interact with BfBB in an abstract way.
 ///
-/// This struct defines functionality related to performing actions on a running instance of *Battle for Bikini Bottom*
-#[non_exhaustive]
+//// This struct allows accessing variables existing with a running instance of *Battle for Bikini Bottom*
+/// and performing actions on that instance in a way that is generic over a backend (e.g Dolphin and Xemu)
+///
+/// NOTE: To a see a list of supported backends see the `Implementors` list of [`GameVarFamily`]
+///
+/// This is the key struct of the [`game_interface`] module and enables interacting with the game.#[non_exhaustive]
 pub struct GameInterface<F: GameVarFamily> {
     /// True while on loading screens
     pub is_loading: F::Var<bool>,
@@ -60,7 +64,7 @@ pub struct GameInterface<F: GameVarFamily> {
     /// Not recommended to mutate this, but the option is available if you wish, it's probably not what you want to do.
     pub game_ostrich: F::Mut<GameOstrich>,
     /// Array for whether a new game should start with powers enabled. First element is the bubble-bowl and the second is the cruise-bubble.
-    pub intial_powers: F::Mut<[u8; 2]>,
+    pub initial_powers: F::Mut<[u8; 2]>,
     /// Location of the ID for the current scene. Can be converted to a [`Level`](crate::Level) via [`TryFrom`].
     ///
     /// # Examples
@@ -95,7 +99,7 @@ impl<F: GameVarFamily> GameInterface<F> {
 
     /// Unlock the Bubble Bowl and Cruise Bubble
     pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
-        self.intial_powers.set([1, 1])
+        self.initial_powers.set([1, 1])
     }
 
     /// Marks a task as available (Silver). This will not update an already unlocked task.
