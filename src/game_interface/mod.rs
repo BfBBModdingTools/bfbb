@@ -90,33 +90,32 @@ pub struct GameInterface<F: GameVarFamily> {
 impl<F: GameVarFamily> GameInterface<F> {
     /// Will start a new game when called. Only works when the player is on the main menu and not in the demo cutscene.
     pub fn start_new_game(&mut self) -> InterfaceResult<()> {
-        Ok(self.game_mode.set(GameMode::Game)?)
+        self.game_mode.set(GameMode::Game)
     }
 
     /// Unlock the Bubble Bowl and Cruise Bubble
     pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
-        self.intial_powers.set([1, 1])?;
-        Ok(())
+        self.intial_powers.set([1, 1])
     }
 
     /// Marks a task as available (Silver). This will not update an already unlocked task.
     pub fn unlock_task(&mut self, spatula: Spatula) -> InterfaceResult<()> {
-        let idx = spatula.into();
-        let curr = self.tasks[idx].menu_count.get()?;
+        let task = &mut self.tasks[spatula];
+        let curr = task.menu_count.get()?;
         if curr != 2 {
-            self.tasks[idx].menu_count.set(1)?
+            task.menu_count.set(1)?
         }
         Ok(())
     }
 
     /// Marks a spatula as "completed" in the pause menu. This has the effect of giving the player access to the task warp.
     pub fn mark_task_complete(&mut self, spatula: Spatula) -> InterfaceResult<()> {
-        Ok(self.tasks[spatula.into()].menu_count.set(2)?)
+        self.tasks[spatula].menu_count.set(2)
     }
 
     /// True when `spatula` is shown as gold in the pause menu.
     pub fn is_task_complete(&self, spatula: Spatula) -> InterfaceResult<bool> {
-        Ok(self.tasks[spatula.into()].menu_count.get()? == 2)
+        Ok(self.tasks[spatula].menu_count.get()? == 2)
     }
 
     /// Collect a spatula in the world. This only removes the entity, it will not complete the task or increment the spatula

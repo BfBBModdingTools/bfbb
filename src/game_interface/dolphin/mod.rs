@@ -58,6 +58,9 @@ pub struct Dolphin {
     state: DolphinState,
 }
 
+// This is really no different from an Option, but allows us to more easily extend `Dolphin` with
+// different states in the future.
+#[allow(clippy::large_enum_variant)]
 enum DolphinState {
     Unhooked,
     Hooked(GameInterface<DolphinVarFamily>),

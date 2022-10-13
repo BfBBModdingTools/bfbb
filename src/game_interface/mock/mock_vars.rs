@@ -79,6 +79,7 @@ impl<T: CheckedBitPattern + EndianAware> GameVar for MockVar<T> {
 
 impl<T: CheckedBitPattern + EndianAware> GameVarMut for MockVar<T> {
     fn set(&mut self, value: Self::T) -> crate::game_interface::InterfaceResult<()> {
-        Ok(self.value = value)
+        self.value = value;
+        Ok(())
     }
 }
