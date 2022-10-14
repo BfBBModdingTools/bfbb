@@ -15,6 +15,10 @@ all-features = true
 name = "game-interface"
 required-features = ["game-interface"]
 
+[[example]]
+name = "hooking"
+required-features = ["game-interface"]
+
 [features]
 game-interface = [
     "dep:process-memory",
@@ -24,6 +28,7 @@ game-interface = [
 ]
 
 [dependencies]
+tap = "1"
 serde = { version = "1", features = ["derive"], optional = true }
 strum = "0.24"
 strum_macros = "0.24"

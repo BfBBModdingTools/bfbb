@@ -2,11 +2,14 @@
 use log::{debug, error, trace};
 use process_memory::TryIntoProcessHandle;
 use sysinfo::{ProcessExt, System, SystemExt};
+use tap::TapFallible;
 use thiserror::Error;
 
 use crate::game_interface::{GameInterface, InterfaceError};
 
 use self::dolphin_var::DolphinVarFamily;
+
+use super::InterfaceResult;
 
 mod data_member;
 pub mod dolphin_var;
@@ -75,26 +78,39 @@ impl Default for Dolphin {
 }
 
 impl Dolphin {
-    /// Attempt to get a reference to the Dolphin interface, hooking if neccessary.
+    /// Interface with dolphin.
+    ///
+    /// This function will first attempt to hook dolphin if necessary. If the hooking process is sucessful then the provided function
+    /// will be called with a reference to the [`GameInterface`]. If that function returns a [`InterfaceError::Unhooked`] error then
+    /// [`Dolphin`] will transition back to an unhooked state.
     ///
     /// # Errors
     ///
-    /// Will return a [`InterfaceError::Unhooked`] if a hooking attempt is made and fails.
-    pub fn get_interface(
+    /// If a hooking attempt is made and fails then an [`InterfaceError::Unhooked`] will be returned. Otherwise the result of the
+    /// provided function will be returned as-is.
+    pub fn with_interface<T>(
         &mut self,
-    ) -> Result<&mut GameInterface<DolphinVarFamily>, InterfaceError> {
-        match self.state {
+        fun: impl FnOnce(&mut GameInterface<DolphinVarFamily>) -> InterfaceResult<T>,
+    ) -> InterfaceResult<T> {
+        let interface = match self.state {
             DolphinState::Unhooked => {
                 // TODO: Probably should use a `HookFailed` error with information about why.
                 let interface = self.hook().map_err(|_| InterfaceError::Unhooked)?;
                 self.state = DolphinState::Hooked(interface);
                 match self.state {
                     DolphinState::Unhooked => unreachable!(),
-                    DolphinState::Hooked(ref mut interface) => Ok(interface),
+                    DolphinState::Hooked(ref mut interface) => interface,
                 }
             }
-            DolphinState::Hooked(ref mut interface) => Ok(interface),
-        }
+            DolphinState::Hooked(ref mut interface) => interface,
+        };
+
+        // Run the user's provided code, catching any `Unhooked` error that may occur and setting our state accordingly
+        fun(interface).tap_err(|e| {
+            if let InterfaceError::Unhooked = e {
+                self.state = DolphinState::Unhooked;
+            }
+        })
     }
 }
 
