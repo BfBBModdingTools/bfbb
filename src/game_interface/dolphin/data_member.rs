@@ -98,7 +98,7 @@ impl<T: Copy + EndianAware> Memory<T> for DataMember<T> {
         use std::slice;
         let offset = self.get_offset()?;
         let mut buffer = Cow::Borrowed(unsafe {
-            slice::from_raw_parts((value as *const T).cast(), std::mem::size_of::<T>())
+            slice::from_raw_parts((value as *const T).cast::<u8>(), std::mem::size_of::<T>())
         });
         if T::NEEDS_SWAP {
             buffer.to_mut().reverse();
