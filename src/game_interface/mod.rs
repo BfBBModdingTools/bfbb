@@ -12,7 +12,7 @@ use crate::{
     Level, Spatula,
 };
 
-use self::game_var::{GameVar, GameVarFamily, GameVarMut};
+use self::game_var::{GameVar, GameVarMut, InterfaceBackend};
 
 pub mod dolphin;
 pub mod game_var;
@@ -49,11 +49,11 @@ pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
 //// This struct allows accessing variables existing with a running instance of *Battle for Bikini Bottom*
 /// and performing actions on that instance in a way that is generic over a backend (e.g Dolphin and Xemu)
 ///
-/// NOTE: To a see a list of supported backends see the `Implementors` list of [`GameVarFamily`]
+/// NOTE: To a see a list of supported backends see the `Implementors` list of [`InterfaceBackend`]
 ///
 /// This is the key struct of the [`game_interface`](self) module and enables interacting with the game.
 #[non_exhaustive]
-pub struct GameInterface<F: GameVarFamily> {
+pub struct GameInterface<F: InterfaceBackend> {
     /// True while on loading screens
     pub is_loading: F::Var<bool>,
     /// Location of the [`GameState`] enum.
@@ -73,10 +73,10 @@ pub struct GameInterface<F: GameVarFamily> {
     /// use std::error::Error;
     ///
     /// use bfbb::game_interface::GameInterface;
-    /// use bfbb::game_interface::game_var::{GameVar, GameVarFamily};
+    /// use bfbb::game_interface::game_var::{GameVar, InterfaceBackend};
     /// use bfbb::Level;
     ///
-    /// fn get_current_level<V: GameVarFamily>(
+    /// fn get_current_level<V: InterfaceBackend>(
     ///     interface: &mut GameInterface<V>,
     /// ) -> Result<Level, Box<dyn Error>> {
     ///     Ok(interface.scene_id.get()?.try_into()?)
@@ -92,7 +92,7 @@ pub struct GameInterface<F: GameVarFamily> {
     lab_door_cost: F::Mut<u32>,
 }
 
-impl<F: GameVarFamily> GameInterface<F> {
+impl<F: InterfaceBackend> GameInterface<F> {
     /// Will start a new game when called. Only works when the player is on the main menu and not in the demo cutscene.
     ///
     /// # Errors
@@ -241,21 +241,21 @@ impl<F: GameVarFamily> GameInterface<F> {
 /// # Examples
 ///
 /// ```
-/// use bfbb::game_interface::game_var::{GameVar, GameVarMut, GameVarFamily};
+/// use bfbb::game_interface::game_var::{GameVar, GameVarMut, InterfaceBackend};
 /// use bfbb::game_interface::{InterfaceResult, Tasks};
 /// use bfbb::Spatula;
 ///
-/// fn unlock_pinapple<V: GameVarFamily>(tasks: &mut Tasks<V>) -> InterfaceResult<()> {
+/// fn unlock_pinapple<V: InterfaceBackend>(tasks: &mut Tasks<V>) -> InterfaceResult<()> {
 ///     tasks[Spatula::OnTopOfThePineapple].menu_count.set(1)
 /// }
 /// ```
-pub struct Tasks<F: GameVarFamily> {
+pub struct Tasks<F: InterfaceBackend> {
     pub(crate) arr: HashMap<Spatula, Task<F>>,
 }
 
 /// Contains [`GameVar`]s for a [`Spatula`]'s pause-menu counter and game object state.
 #[non_exhaustive]
-pub struct Task<F: GameVarFamily> {
+pub struct Task<F: InterfaceBackend> {
     /// The `count` field of this task's `_xCounter` struct.
     ///
     /// Notable values are:
@@ -272,7 +272,7 @@ pub struct Task<F: GameVarFamily> {
     pub state: Option<F::Mut<u32>>,
 }
 
-impl<V: GameVarFamily> Index<Spatula> for Tasks<V> {
+impl<V: InterfaceBackend> Index<Spatula> for Tasks<V> {
     type Output = Task<V>;
 
     fn index(&self, index: Spatula) -> &Self::Output {
@@ -280,7 +280,7 @@ impl<V: GameVarFamily> Index<Spatula> for Tasks<V> {
     }
 }
 
-impl<T: GameVarFamily> IndexMut<Spatula> for Tasks<T> {
+impl<T: InterfaceBackend> IndexMut<Spatula> for Tasks<T> {
     fn index_mut(&mut self, index: Spatula) -> &mut Self::Output {
         self.arr.get_mut(&index).unwrap()
     }
@@ -288,7 +288,7 @@ impl<T: GameVarFamily> IndexMut<Spatula> for Tasks<T> {
 
 /// [`GameVar`]s related to the bubble bowl and cruise-missile
 #[non_exhaustive]
-pub struct PowerUps<F: GameVarFamily> {
+pub struct PowerUps<F: InterfaceBackend> {
     /// Whether the bubble bowl is currently unlocked
     pub bubble_bowl: F::Mut<bool>,
     /// Whether the cruise bubble is currently unlocked
@@ -299,7 +299,7 @@ pub struct PowerUps<F: GameVarFamily> {
     pub initial_cruise_bubble: F::Mut<bool>,
 }
 
-impl<F: GameVarFamily> PowerUps<F> {
+impl<F: InterfaceBackend> PowerUps<F> {
     /// Set whether a new game should start with powers or not (New Game+)
     ///
     /// # Errors

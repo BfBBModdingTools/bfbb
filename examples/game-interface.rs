@@ -2,8 +2,8 @@ use std::error::Error;
 
 use bfbb::game_interface::{
     dolphin::Dolphin,
-    game_var::{GameVar, GameVarFamily, GameVarMut},
-    mock::mock_vars::MockVarFamily,
+    game_var::{GameVar, GameVarMut, InterfaceBackend},
+    mock::mock_vars::MockBackend,
     GameInterface, InterfaceResult,
 };
 
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // We don't yet have a real second interface so we'll use a mock.
         // Pretend this is an implementation for an Xemu-based GameInterface
-        let mut xemu_interface = GameInterface::<MockVarFamily>::default();
+        let mut xemu_interface = GameInterface::<MockBackend>::default();
 
         println!("Dolphin:");
         takes_generic_and_sets_spatula_count(dol_interface, 16)?;
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn takes_generic_and_sets_spatula_count<I: GameVarFamily>(
+fn takes_generic_and_sets_spatula_count<I: InterfaceBackend>(
     interface: &mut GameInterface<I>,
     new_count: u32,
 ) -> InterfaceResult<()> {

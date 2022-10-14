@@ -2,7 +2,7 @@ use std::thread;
 use std::time::Duration;
 
 use bfbb::game_interface::dolphin::Dolphin;
-use bfbb::game_interface::game_var::{GameVar, GameVarFamily, GameVarMut};
+use bfbb::game_interface::game_var::{GameVar, GameVarMut, InterfaceBackend};
 use bfbb::game_interface::{GameInterface, InterfaceError, InterfaceResult};
 use bfbb::game_state::GameState;
 
@@ -32,6 +32,6 @@ fn main() -> InterfaceResult<()> {
     }
 }
 
-fn mod_logic<F: GameVarFamily>(interface: &mut GameInterface<F>) -> InterfaceResult<()> {
+fn mod_logic<F: InterfaceBackend>(interface: &mut GameInterface<F>) -> InterfaceResult<()> {
     interface.game_state.set(GameState::Exit)
 }

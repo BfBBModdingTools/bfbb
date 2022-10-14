@@ -7,7 +7,7 @@ use strum::IntoEnumIterator;
 use crate::{
     endian::EndianAware,
     game_interface::{
-        game_var::{GameVar, GameVarFamily, GameVarMut},
+        game_var::{GameVar, GameVarMut, InterfaceBackend},
         GameInterface, InterfaceResult, PowerUps, Task, Tasks,
     },
     Spatula,
@@ -15,9 +15,9 @@ use crate::{
 
 use super::data_member::{CheckedMemory, DataMember};
 
-/// Dolphin implementation for [`GameVarFamily`]
-pub enum DolphinVarFamily {}
-impl GameVarFamily for DolphinVarFamily {
+/// Dolphin implementation for [`InterfaceBackend`]
+pub enum DolphinBackend {}
+impl InterfaceBackend for DolphinBackend {
     type Var<T: CheckedBitPattern + EndianAware> = DolphinVar<T>;
     type Mut<T: CheckedBitPattern + EndianAware> = DolphinVar<T>;
 }
@@ -47,7 +47,7 @@ impl<T> DolphinVar<T> {
 }
 
 impl<T: EndianAware + CheckedBitPattern> GameVar for DolphinVar<T> {
-    type T = T;
+    type Target = T;
     fn get(&self) -> InterfaceResult<T> {
         Ok(self.ptr.checked_read()?)
     }
@@ -66,7 +66,7 @@ const SCENE_PTR_ADDRESS: usize = 0x803C_2518;
 const SPATULA_COUNT_ADDRESS: usize = 0x803C_205C;
 const LAB_DOOR_ADDRESS: usize = 0x804F_6CB8;
 
-impl GameInterface<DolphinVarFamily> {
+impl GameInterface<DolphinBackend> {
     pub(crate) fn new(base_addr: usize, handle: ProcessHandle) -> Self {
         Self {
             is_loading: DolphinVar::new([LOADING_ADDRESS], base_addr, handle),
@@ -83,7 +83,7 @@ impl GameInterface<DolphinVarFamily> {
 }
 
 const SWORLD_BASE: usize = 0x802F_63C8;
-impl Tasks<DolphinVarFamily> {
+impl Tasks<DolphinBackend> {
     fn new(base_addr: usize, handle: ProcessHandle) -> Self {
         const SIZE_OF_MENU_WORLD: usize = 0x24C;
         const SIZE_OF_MENU_TASK: usize = 0x48;
@@ -116,7 +116,7 @@ impl Tasks<DolphinVarFamily> {
 }
 
 const POWERS_ADDRESS: usize = 0x803C_0F15;
-impl PowerUps<DolphinVarFamily> {
+impl PowerUps<DolphinBackend> {
     fn new(base_addr: usize, handle: ProcessHandle) -> Self {
         Self {
             bubble_bowl: DolphinVar::new([POWERS_ADDRESS], base_addr, handle),

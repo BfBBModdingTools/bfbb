@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::game_interface::{GameInterface, InterfaceError};
 
-use self::dolphin_var::DolphinVarFamily;
+use self::dolphin_var::DolphinBackend;
 
 use super::InterfaceResult;
 
@@ -38,7 +38,7 @@ impl From<std::io::Error> for Error {
     }
 }
 
-/// Provider for [`GameInterface<DolphinVarFamily>`]
+/// Provider for [`GameInterface<DolphinBackend>`]
 ///
 /// # Examples
 /// ```
@@ -65,7 +65,7 @@ pub struct Dolphin {
 #[allow(clippy::large_enum_variant)]
 enum DolphinState {
     Unhooked,
-    Hooked(GameInterface<DolphinVarFamily>),
+    Hooked(GameInterface<DolphinBackend>),
 }
 
 impl Default for Dolphin {
@@ -90,7 +90,7 @@ impl Dolphin {
     /// provided function will be returned as-is.
     pub fn with_interface<T>(
         &mut self,
-        fun: impl FnOnce(&mut GameInterface<DolphinVarFamily>) -> InterfaceResult<T>,
+        fun: impl FnOnce(&mut GameInterface<DolphinBackend>) -> InterfaceResult<T>,
     ) -> InterfaceResult<T> {
         let interface = match self.state {
             DolphinState::Unhooked => {
@@ -120,7 +120,7 @@ impl Dolphin {
     /// Dolphin is considered "hooked" when it's process is found and the region of memory used
     /// for emulating the GameCube's memory is located. This method will always attempt to hook
     /// Dolphin when called, even if already hooked.
-    fn hook(&mut self) -> Result<GameInterface<DolphinVarFamily>, Error> {
+    fn hook(&mut self) -> Result<GameInterface<DolphinBackend>, Error> {
         // TODO: Differentiate errors between Dolphin not being found and Dolphin being found, but the game not being open.
         self.system.refresh_processes();
 
@@ -146,7 +146,7 @@ impl Dolphin {
             #[allow(clippy::useless_conversion)]
             let pid: process_memory::Pid = pid.into();
             let handle = pid.try_into_process_handle()?;
-            return Ok(GameInterface::<DolphinVarFamily>::new(base_address, handle));
+            return Ok(GameInterface::<DolphinBackend>::new(base_address, handle));
         }
 
         Err(Error::RegionNotFound)

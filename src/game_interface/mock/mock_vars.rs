@@ -8,21 +8,21 @@ use strum::IntoEnumIterator;
 use crate::{
     endian::EndianAware,
     game_interface::{
-        game_var::{GameVar, GameVarFamily, GameVarMut},
+        game_var::{GameVar, GameVarMut, InterfaceBackend},
         GameInterface, PowerUps, Task, Tasks,
     },
     game_state::{GameMode, GameOstrich, GameState},
     Spatula,
 };
 
-/// A mock implementation for [`GameVarFamily`]
-pub enum MockVarFamily {}
-impl GameVarFamily for MockVarFamily {
+/// A mock implementation for [`InterfaceBackend`]
+pub enum MockBackend {}
+impl InterfaceBackend for MockBackend {
     type Var<T: CheckedBitPattern + EndianAware> = MockVar<T>;
     type Mut<T: CheckedBitPattern + EndianAware> = MockVar<T>;
 }
 
-impl Default for GameInterface<MockVarFamily> {
+impl Default for GameInterface<MockBackend> {
     fn default() -> Self {
         Self {
             is_loading: MockVar::default(),
@@ -38,7 +38,7 @@ impl Default for GameInterface<MockVarFamily> {
     }
 }
 
-impl Tasks<MockVarFamily> {
+impl Tasks<MockBackend> {
     fn new() -> Self {
         Self {
             arr: Spatula::iter()
@@ -57,7 +57,7 @@ impl Tasks<MockVarFamily> {
     }
 }
 
-impl PowerUps<MockVarFamily> {
+impl PowerUps<MockBackend> {
     fn new() -> Self {
         Self {
             bubble_bowl: MockVar::default(),
@@ -81,15 +81,15 @@ impl<T> MockVar<T> {
 }
 
 impl<T: CheckedBitPattern + EndianAware> GameVar for MockVar<T> {
-    type T = T;
+    type Target = T;
 
-    fn get(&self) -> crate::game_interface::InterfaceResult<Self::T> {
+    fn get(&self) -> crate::game_interface::InterfaceResult<Self::Target> {
         Ok(self.value)
     }
 }
 
 impl<T: CheckedBitPattern + EndianAware> GameVarMut for MockVar<T> {
-    fn set(&mut self, value: Self::T) -> crate::game_interface::InterfaceResult<()> {
+    fn set(&mut self, value: Self::Target) -> crate::game_interface::InterfaceResult<()> {
         self.value = value;
         Ok(())
     }
