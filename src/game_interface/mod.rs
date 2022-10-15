@@ -24,9 +24,12 @@ pub mod mock;
 #[derive(Copy, Clone, Debug, Error)]
 #[non_exhaustive]
 pub enum InterfaceError {
-    /// Error for when the interface isn't hooked to the game.
+    /// Error for when a previously hooked interface has become unhooked.
     #[error("Interface became unhooked")]
     Unhooked,
+    /// Error for when an interface can't be hooked for some reason.
+    #[error("A hooking attempt failed")]
+    HookingFailed,
     /// Error for when an action fails for any other reason.
     #[error("Interface operation failed")]
     Other,

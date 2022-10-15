@@ -14,7 +14,7 @@ use bfbb::game_interface::{
 fn main() -> Result<(), Box<dyn Error>> {
     // Setup a dolphin interface
     let mut dolphin = Dolphin::default();
-    dolphin.with_interface(|dol_interface| {
+    dolphin.do_with_interface(|dol_interface| {
         // Set a known starting value differing from our other interface
         dol_interface.spatula_count.set(3)?;
 

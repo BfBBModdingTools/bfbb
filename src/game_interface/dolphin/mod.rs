@@ -88,14 +88,14 @@ impl Dolphin {
     ///
     /// If a hooking attempt is made and fails then an [`InterfaceError::Unhooked`] will be returned. Otherwise the result of the
     /// provided function will be returned as-is.
-    pub fn with_interface<T>(
+    pub fn do_with_interface<T>(
         &mut self,
         fun: impl FnOnce(&mut GameInterface<DolphinBackend>) -> InterfaceResult<T>,
     ) -> InterfaceResult<T> {
         let interface = match self.state {
             DolphinState::Unhooked => {
-                // TODO: Probably should use a `HookFailed` error with information about why.
-                let interface = self.hook().map_err(|_| InterfaceError::Unhooked)?;
+                // TODO: Add information about why.
+                let interface = self.hook()?;
                 self.state = DolphinState::Hooked(interface);
                 match self.state {
                     DolphinState::Unhooked => unreachable!(),
@@ -108,6 +108,7 @@ impl Dolphin {
         // Run the user's provided code, catching any `Unhooked` error that may occur and setting our state accordingly
         fun(interface).tap_err(|e| {
             if let InterfaceError::Unhooked = e {
+                trace!("Unhooked from Dolphin");
                 self.state = DolphinState::Unhooked;
             }
         })
@@ -120,7 +121,7 @@ impl Dolphin {
     /// Dolphin is considered "hooked" when it's process is found and the region of memory used
     /// for emulating the GameCube's memory is located. This method will always attempt to hook
     /// Dolphin when called, even if already hooked.
-    fn hook(&mut self) -> Result<GameInterface<DolphinBackend>, Error> {
+    fn hook(&mut self) -> InterfaceResult<GameInterface<DolphinBackend>> {
         // TODO: Differentiate errors between Dolphin not being found and Dolphin being found, but the game not being open.
         self.system.refresh_processes();
 
@@ -149,7 +150,7 @@ impl Dolphin {
             return Ok(GameInterface::<DolphinBackend>::new(base_address, handle));
         }
 
-        Err(Error::RegionNotFound)
+        Err(InterfaceError::HookingFailed)
     }
 }
 /// A [GameInterface](crate::game_interface::GameInterface) implemented for Dolphin running on the same local machine.
