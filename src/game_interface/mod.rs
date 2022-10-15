@@ -1,4 +1,4 @@
-//! Allows for performing actions on or reading information about a running instance of BfBB.
+//! Allows performing actions on or reading information about a running instance of BfBB.
 
 use std::{
     collections::HashMap,
@@ -18,35 +18,6 @@ pub mod dolphin;
 pub mod game_var;
 pub mod mock;
 
-/// Error type for failed [`GameInterface`] actions.
-///
-/// This list is non-exhaustive and may grow over time.
-#[derive(Copy, Clone, Debug, Error)]
-#[non_exhaustive]
-pub enum InterfaceError {
-    /// Error for when a previously hooked interface has become unhooked.
-    #[error("Interface became unhooked")]
-    Unhooked,
-    /// Error for when an interface can't be hooked for some reason.
-    #[error("A hooking attempt failed")]
-    HookingFailed,
-    /// Error for when an action fails for any other reason.
-    #[error("Interface operation failed")]
-    Other,
-}
-
-impl From<std::io::Error> for InterfaceError {
-    fn from(e: std::io::Error) -> Self {
-        // For now, treat any error other than InvalidData as being unhooked
-        if e.kind() == std::io::ErrorKind::InvalidData {
-            return Self::Other;
-        }
-        Self::Unhooked
-    }
-}
-
-/// Result type for [`GameInterface`] actions.
-pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
 /// Interact with BfBB in an abstract way.
 ///
 //// This struct allows accessing variables existing with a running instance of *Battle for Bikini Bottom*
@@ -93,6 +64,54 @@ pub struct GameInterface<F: InterfaceBackend> {
 
     // TODO: This value is on the heap, it shouldn't be global like this
     lab_door_cost: F::Mut<u32>,
+}
+
+/// A collection of [`Task`]s. Can be indexed by [`Spatula`]
+///
+/// # Examples
+///
+/// ```
+/// use bfbb::game_interface::game_var::{GameVar, GameVarMut, InterfaceBackend};
+/// use bfbb::game_interface::{InterfaceResult, Tasks};
+/// use bfbb::Spatula;
+///
+/// fn unlock_pinapple<V: InterfaceBackend>(tasks: &mut Tasks<V>) -> InterfaceResult<()> {
+///     tasks[Spatula::OnTopOfThePineapple].menu_count.set(1)
+/// }
+/// ```
+pub struct Tasks<F: InterfaceBackend> {
+    pub(crate) arr: HashMap<Spatula, Task<F>>,
+}
+
+/// Contains [`GameVar`]s for a [`Spatula`]'s pause-menu counter and game object state.
+#[non_exhaustive]
+pub struct Task<F: InterfaceBackend> {
+    /// The `count` field of this task's `_xCounter` struct.
+    ///
+    /// Notable values are:
+    /// - `0` => Task is "locked", will be a question mark in the menu.
+    /// - `1` => Task is "incomplete", will be a silver spatula in the menu.
+    /// - `2` => Task is "complete", will be a golden spatula in the menu.
+    /// - `3` => Task is also silver in the menu, may have some semantics not currently understood.
+    /// - `_` => No icon will appear for this task in the menu, just an empty bubble. You can not warp to it and
+    ///          attempting to will put the menu into an invalid state until a different unlocked task is selected.
+    pub menu_count: F::Mut<i16>,
+    /// A bitfield of flags for a spatula entity. The first bit determines if the entity is enabled or not.
+    pub flags: Option<F::Mut<u8>>,
+    /// Another bitfield for a spatula entity.
+    pub state: Option<F::Mut<u32>>,
+}
+/// [`GameVar`]s related to the bubble bowl and cruise-missile
+#[non_exhaustive]
+pub struct PowerUps<F: InterfaceBackend> {
+    /// Whether the bubble bowl is currently unlocked
+    pub bubble_bowl: F::Mut<bool>,
+    /// Whether the cruise bubble is currently unlocked
+    pub cruise_bubble: F::Mut<bool>,
+    /// Whether new games should begin with the bubble bowl unlocked.
+    pub initial_bubble_bowl: F::Mut<bool>,
+    /// Whether new games should begin with the cruise missile
+    pub initial_cruise_bubble: F::Mut<bool>,
 }
 
 impl<F: InterfaceBackend> GameInterface<F> {
@@ -239,42 +258,6 @@ impl<F: InterfaceBackend> GameInterface<F> {
     }
 }
 
-/// A collection of [`Task`]s. Can be indexed by [`Spatula`]
-///
-/// # Examples
-///
-/// ```
-/// use bfbb::game_interface::game_var::{GameVar, GameVarMut, InterfaceBackend};
-/// use bfbb::game_interface::{InterfaceResult, Tasks};
-/// use bfbb::Spatula;
-///
-/// fn unlock_pinapple<V: InterfaceBackend>(tasks: &mut Tasks<V>) -> InterfaceResult<()> {
-///     tasks[Spatula::OnTopOfThePineapple].menu_count.set(1)
-/// }
-/// ```
-pub struct Tasks<F: InterfaceBackend> {
-    pub(crate) arr: HashMap<Spatula, Task<F>>,
-}
-
-/// Contains [`GameVar`]s for a [`Spatula`]'s pause-menu counter and game object state.
-#[non_exhaustive]
-pub struct Task<F: InterfaceBackend> {
-    /// The `count` field of this task's `_xCounter` struct.
-    ///
-    /// Notable values are:
-    /// - `0` => Task is "locked", will be a question mark in the menu.
-    /// - `1` => Task is "incomplete", will be a silver spatula in the menu.
-    /// - `2` => Task is "complete", will be a golden spatula in the menu.
-    /// - `3` => Task is also silver in the menu, may have some semantics not currently understood.
-    /// - `_` => No icon will appear for this task in the menu, just an empty bubble. You can not warp to it and
-    ///          attempting to will put the menu into an invalid state until a different unlocked task is selected.
-    pub menu_count: F::Mut<i16>,
-    /// A bitfield of flags for a spatula entity. The first bit determines if the entity is enabled or not.
-    pub flags: Option<F::Mut<u8>>,
-    /// Another bitfield for a spatula entity.
-    pub state: Option<F::Mut<u32>>,
-}
-
 impl<V: InterfaceBackend> Index<Spatula> for Tasks<V> {
     type Output = Task<V>;
 
@@ -287,19 +270,6 @@ impl<T: InterfaceBackend> IndexMut<Spatula> for Tasks<T> {
     fn index_mut(&mut self, index: Spatula) -> &mut Self::Output {
         self.arr.get_mut(&index).unwrap()
     }
-}
-
-/// [`GameVar`]s related to the bubble bowl and cruise-missile
-#[non_exhaustive]
-pub struct PowerUps<F: InterfaceBackend> {
-    /// Whether the bubble bowl is currently unlocked
-    pub bubble_bowl: F::Mut<bool>,
-    /// Whether the cruise bubble is currently unlocked
-    pub cruise_bubble: F::Mut<bool>,
-    /// Whether new games should begin with the bubble bowl unlocked.
-    pub initial_bubble_bowl: F::Mut<bool>,
-    /// Whether new games should begin with the cruise missile
-    pub initial_cruise_bubble: F::Mut<bool>,
 }
 
 impl<F: InterfaceBackend> PowerUps<F> {
@@ -321,5 +291,80 @@ impl<F: InterfaceBackend> PowerUps<F> {
     pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
         self.bubble_bowl.set(true)?;
         self.cruise_bubble.set(true)
+    }
+}
+
+/// A type that is capable of providing a [`GameInterface`], generic over some backend.
+///
+/// # Examples
+/// ```
+/// use bfbb::game_interface::mock::MockInterface;
+/// use bfbb::game_interface::GameInterfaceProvider;
+/// use bfbb::game_interface::game_var::GameVar;
+/// use bfbb::game_interface::InterfaceResult;
+///
+/// fn main() -> InterfaceResult<()> {
+///     let mut provider = MockInterface::default();
+///     provider.do_with_interface(|interface| {
+///         let count = interface.spatula_count.get()?;
+///         println!("You have {count} spatulas");
+///         Ok(())
+///     })
+/// }
+/// ```
+pub trait GameInterfaceProvider {
+    /// Backend implementation for this provider.
+    type Backend;
+    /// Interface with the backend.
+    ///
+    /// This function will first attempt to hook the backend if necessary. If the hooking process is sucessful then the provided function
+    /// will be called with a reference to the [`GameInterface`]. If that function returns a [`InterfaceError::Unhooked`] error then
+    /// [`Dolphin`](dolphin::Dolphin) will transition back to an unhooked state.
+    ///
+    /// # Errors
+    ///
+    /// If a hooking attempt is made and fails then an [`InterfaceError::Unhooked`] will be returned. Otherwise the result of the
+    /// provided function will be returned as-is.
+    fn do_with_interface<T>(
+        &mut self,
+        fun: impl FnOnce(&mut GameInterface<Self::Backend>) -> InterfaceResult<T>,
+    ) -> InterfaceResult<T>;
+
+    /// Check if this interface is currently available
+    ///
+    /// For most interfaces, this is the same thing as being "hooked".
+    ///
+    /// *NOTE*: A currently available interface may become unavaiable in the future and vice versa.
+    /// For example: The user closes dolphin, making it unavailable, but then opens it again later.
+    fn is_available(&mut self) -> bool;
+}
+
+/// Result type for [`GameInterface`] actions.
+pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
+
+/// Error type for failed [`GameInterface`] actions.
+///
+/// This list is non-exhaustive and may grow over time.
+#[derive(Copy, Clone, Debug, Error)]
+#[non_exhaustive]
+pub enum InterfaceError {
+    /// Error for when a previously hooked interface has become unhooked.
+    #[error("Interface became unhooked")]
+    Unhooked,
+    /// Error for when an interface can't be hooked for some reason.
+    #[error("A hooking attempt failed")]
+    HookingFailed,
+    /// Error for when an action fails for any other reason.
+    #[error("Interface operation failed")]
+    Other,
+}
+
+impl From<std::io::Error> for InterfaceError {
+    fn from(e: std::io::Error) -> Self {
+        // For now, treat any error other than InvalidData as being unhooked
+        if e.kind() == std::io::ErrorKind::InvalidData {
+            return Self::Other;
+        }
+        Self::Unhooked
     }
 }

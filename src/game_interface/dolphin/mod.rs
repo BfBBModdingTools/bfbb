@@ -9,7 +9,7 @@ use crate::game_interface::{GameInterface, InterfaceError};
 
 use self::dolphin_var::DolphinBackend;
 
-use super::InterfaceResult;
+use super::{GameInterfaceProvider, InterfaceResult};
 
 mod data_member;
 pub mod dolphin_var;
@@ -39,23 +39,7 @@ impl From<std::io::Error> for Error {
 }
 
 /// Provider for [`GameInterface<DolphinBackend>`]
-///
-/// # Examples
-/// ```
-/// use bfbb::game_interface::dolphin::Dolphin;
-/// use bfbb::game_interface::game_var::GameVar;
-/// use bfbb::game_interface::InterfaceResult;
-///
-/// fn main() -> InterfaceResult<()> {
-/// let mut dolphin = Dolphin::default();
-///     if let Ok(interface) = dolphin.get_interface() {
-///         let count = interface.spatula_count.get()?;
-///         println!("You have {count} spatulas");
-///     }
-///     Ok(())
-/// }
-/// ```
-pub struct Dolphin {
+pub struct DolphinInterface {
     system: System,
     state: DolphinState,
 }
@@ -68,7 +52,7 @@ enum DolphinState {
     Hooked(GameInterface<DolphinBackend>),
 }
 
-impl Default for Dolphin {
+impl Default for DolphinInterface {
     fn default() -> Self {
         Self {
             system: System::default(),
@@ -77,21 +61,31 @@ impl Default for Dolphin {
     }
 }
 
-impl Dolphin {
-    /// Interface with dolphin.
-    ///
-    /// This function will first attempt to hook dolphin if necessary. If the hooking process is sucessful then the provided function
-    /// will be called with a reference to the [`GameInterface`]. If that function returns a [`InterfaceError::Unhooked`] error then
-    /// [`Dolphin`] will transition back to an unhooked state.
-    ///
-    /// # Errors
-    ///
-    /// If a hooking attempt is made and fails then an [`InterfaceError::Unhooked`] will be returned. Otherwise the result of the
-    /// provided function will be returned as-is.
-    pub fn do_with_interface<T>(
+impl GameInterfaceProvider for DolphinInterface {
+    type Backend = DolphinBackend;
+
+    fn do_with_interface<T>(
         &mut self,
-        fun: impl FnOnce(&mut GameInterface<DolphinBackend>) -> InterfaceResult<T>,
+        fun: impl FnOnce(&mut GameInterface<Self::Backend>) -> InterfaceResult<T>,
     ) -> InterfaceResult<T> {
+        let interface = self.get_interface_or_hook();
+
+        // Run the user's provided code, catching any `Unhooked` error that may occur and setting our state accordingly
+        fun(interface?).tap_err(|e| {
+            if let InterfaceError::Unhooked = e {
+                trace!("Unhooked from Dolphin");
+                self.state = DolphinState::Unhooked;
+            }
+        })
+    }
+
+    fn is_available(&mut self) -> bool {
+        self.get_interface_or_hook().is_ok()
+    }
+}
+
+impl DolphinInterface {
+    fn get_interface_or_hook(&mut self) -> InterfaceResult<&mut GameInterface<DolphinBackend>> {
         let interface = match self.state {
             DolphinState::Unhooked => {
                 // TODO: Add information about why.
@@ -104,18 +98,9 @@ impl Dolphin {
             }
             DolphinState::Hooked(ref mut interface) => interface,
         };
-
-        // Run the user's provided code, catching any `Unhooked` error that may occur and setting our state accordingly
-        fun(interface).tap_err(|e| {
-            if let InterfaceError::Unhooked = e {
-                trace!("Unhooked from Dolphin");
-                self.state = DolphinState::Unhooked;
-            }
-        })
+        Ok(interface)
     }
-}
 
-impl Dolphin {
     /// Attempt to hook Dolphin
     ///
     /// Dolphin is considered "hooked" when it's process is found and the region of memory used
