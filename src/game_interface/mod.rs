@@ -146,7 +146,7 @@ impl<F: InterfaceBackend> GameInterface<F> {
     pub fn unlock_task(&mut self, spatula: Spatula) -> InterfaceResult<()> {
         let task = &mut self.tasks[spatula];
         let curr = task.menu_count.get()?;
-        if curr != 2 {
+        if curr == 0 {
             task.menu_count.set(1)?;
         }
         Ok(())

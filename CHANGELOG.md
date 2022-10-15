@@ -14,11 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Additions
 
-- Added `GameInterfaceProvider` trait for types that are caple of providing a game interface.
+- Added `InterfaceProvider` trait for types that are caple of providing a game interface.
 - Added `MockInterface` for writing testing logic without using a real backend.
 - Added `GameVar` and `GameVarMut` traits to represent accessible regions of game memory in a strongly-typed manner.
 - Added `InterfaceError::HookingFailed` for when a hooking attempt fails. `InterfaceError::Unhooked`
   represents when a previously hooked interface becomes unhooked.
+
+### Fixed
+
+- `GameInterface::unlock_task` will now only set a task's counter to `1` if it was previously `0`. This will preserve a
+  value of `3` which can also correspond to an "silver" task (e.g. Infestation at the Krusty Krab)
 
 ### Removals
 
