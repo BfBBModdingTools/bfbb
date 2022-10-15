@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+
+- Refactored `GameInterface` into a struct that is generic over any backend-implementation
+- Refactored `DolphinInterface` into a struct that implements `GameInterfaceProvider<Backend=DolphinBackend>`
+
+### Additions
+
+- Added `GameInterfaceProvider` trait for types that are caple of providing a game interface.
+- Added `MockInterface` for writing testing logic without using a real backend.
+- Added `GameVar` and `GameVarMut` traits to represent accessible regions of game memory in a strongly-typed manner.
+- Added `InterfaceError::HookingFailed` for when a hooking attempt fails. `InterfaceError::Unhooked`
+  represents when a previously hooked interface becomes unhooked.
+
+### Removals
+
+- Removed several methods on `GameInterface` that would simply get/set memory regions that are now represented as `GameVar`s
+
 ## [0.2.1] - 2022-09-22
 
 ### Fixed
