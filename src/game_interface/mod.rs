@@ -299,7 +299,7 @@ impl<F: InterfaceBackend> PowerUps<F> {
 /// # Examples
 /// ```
 /// use bfbb::game_interface::mock::MockInterface;
-/// use bfbb::game_interface::GameInterfaceProvider;
+/// use bfbb::game_interface::InterfaceProvider;
 /// use bfbb::game_interface::game_var::GameVar;
 /// use bfbb::game_interface::InterfaceResult;
 ///
@@ -312,7 +312,7 @@ impl<F: InterfaceBackend> PowerUps<F> {
 ///     })
 /// }
 /// ```
-pub trait GameInterfaceProvider {
+pub trait InterfaceProvider {
     /// Backend implementation for this provider.
     type Backend;
     /// Interface with the backend.

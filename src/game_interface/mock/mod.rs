@@ -2,7 +2,7 @@
 
 use self::mock_vars::MockBackend;
 
-use super::{GameInterface, GameInterfaceProvider, InterfaceResult};
+use super::{GameInterface, InterfaceProvider, InterfaceResult};
 
 pub mod mock_vars;
 
@@ -11,7 +11,7 @@ pub mod mock_vars;
 pub struct MockInterface {
     interface: GameInterface<MockBackend>,
 }
-impl GameInterfaceProvider for MockInterface {
+impl InterfaceProvider for MockInterface {
     type Backend = MockBackend;
 
     fn do_with_interface<T>(

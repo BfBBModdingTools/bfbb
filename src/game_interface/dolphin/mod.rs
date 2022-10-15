@@ -9,7 +9,7 @@ use crate::game_interface::{GameInterface, InterfaceError};
 
 use self::dolphin_var::DolphinBackend;
 
-use super::{GameInterfaceProvider, InterfaceResult};
+use super::{InterfaceProvider, InterfaceResult};
 
 mod data_member;
 pub mod dolphin_var;
@@ -61,7 +61,7 @@ impl Default for DolphinInterface {
     }
 }
 
-impl GameInterfaceProvider for DolphinInterface {
+impl InterfaceProvider for DolphinInterface {
     type Backend = DolphinBackend;
 
     fn do_with_interface<T>(

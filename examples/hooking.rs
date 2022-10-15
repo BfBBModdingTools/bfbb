@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use bfbb::game_interface::dolphin::DolphinInterface;
 use bfbb::game_interface::game_var::{GameVar, GameVarMut, InterfaceBackend};
-use bfbb::game_interface::{GameInterface, GameInterfaceProvider, InterfaceError, InterfaceResult};
+use bfbb::game_interface::{GameInterface, InterfaceError, InterfaceProvider, InterfaceResult};
 use bfbb::game_state::GameState;
 
 fn main() -> InterfaceResult<()> {

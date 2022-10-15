@@ -2,7 +2,7 @@ use bfbb::game_interface::{
     dolphin::DolphinInterface,
     game_var::{GameVar, GameVarMut, InterfaceBackend},
     mock::MockInterface,
-    GameInterface, GameInterfaceProvider, InterfaceResult,
+    GameInterface, InterfaceProvider, InterfaceResult,
 };
 
 /// While it's unlikely that you'd need to use two separate [`GameInterface`](GameInterface)s at the same time,
@@ -23,7 +23,7 @@ fn main() -> InterfaceResult<()> {
     xemu.do_with_interface(takes_generic_and_adds_spatulas)
 }
 
-/// Since this function has the signature expected by `GameInterfaceProvider::do_with_interface`
+/// Since this function has the signature expected by `InterfaceProvider::do_with_interface`
 /// we can just pass it directly.
 fn takes_generic_and_adds_spatulas<I: InterfaceBackend>(
     interface: &mut GameInterface<I>,

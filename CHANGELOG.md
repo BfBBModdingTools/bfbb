@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking
 
 - Refactored `GameInterface` into a struct that is generic over any backend-implementation
-- Refactored `DolphinInterface` into a struct that implements `GameInterfaceProvider<Backend=DolphinBackend>`
+- Refactored `DolphinInterface` into a struct that implements `InterfaceProvider<Backend=DolphinBackend>`
 
 ### Additions
 
