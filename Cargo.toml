@@ -39,7 +39,7 @@ log = "0.4"
 
 #Memory Shenanigans
 process-memory = { version = "0.5", optional = true }  # For reading external process memory
-proc-maps = { version = "0.2", optional = true }       # For querying memory maps
+proc-maps = { version = "0.3", optional = true }       # For querying memory maps
 sysinfo = { version = "0.26", optional = true }        # For getting PID by name
 bytemuck = { version = "1.12", features = ["derive"] }
 
