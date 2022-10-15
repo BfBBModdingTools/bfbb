@@ -92,7 +92,8 @@ pub struct Task<F: InterfaceBackend> {
     /// - `0` => Task is "locked", will be a question mark in the menu.
     /// - `1` => Task is "incomplete", will be a silver spatula in the menu.
     /// - `2` => Task is "complete", will be a golden spatula in the menu.
-    /// - `3` => Task is also silver in the menu, may have some semantics not currently understood.
+    /// - `3` => Task is also silver in the menu, this appears to only be used by [`Spatula::InfestationAtTheKrustyKrab`],
+    ///          which uses this value for after clearing the robots, but before you've collected the spatula.
     /// - `_` => No icon will appear for this task in the menu, just an empty bubble. You can not warp to it and
     ///          attempting to will put the menu into an invalid state until a different unlocked task is selected.
     pub menu_count: F::Mut<i16>,
