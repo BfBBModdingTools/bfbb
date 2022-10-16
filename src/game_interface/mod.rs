@@ -92,7 +92,8 @@ pub struct Task<F: InterfaceBackend> {
     /// - `0` => Task is "locked", will be a question mark in the menu.
     /// - `1` => Task is "incomplete", will be a silver spatula in the menu.
     /// - `2` => Task is "complete", will be a golden spatula in the menu.
-    /// - `3` => Task is also silver in the menu, may have some semantics not currently understood.
+    /// - `3` => Task is also silver in the menu, this appears to only be used by [`Spatula::InfestationAtTheKrustyKrab`],
+    ///          which uses this value for after clearing the robots, but before you've collected the spatula.
     /// - `_` => No icon will appear for this task in the menu, just an empty bubble. You can not warp to it and
     ///          attempting to will put the menu into an invalid state until a different unlocked task is selected.
     pub menu_count: F::Mut<i16>,
@@ -146,7 +147,7 @@ impl<F: InterfaceBackend> GameInterface<F> {
     pub fn unlock_task(&mut self, spatula: Spatula) -> InterfaceResult<()> {
         let task = &mut self.tasks[spatula];
         let curr = task.menu_count.get()?;
-        if curr != 2 {
+        if curr == 0 {
             task.menu_count.set(1)?;
         }
         Ok(())
@@ -319,7 +320,7 @@ pub trait InterfaceProvider {
     ///
     /// This function will first attempt to hook the backend if necessary. If the hooking process is sucessful then the provided function
     /// will be called with a reference to the [`GameInterface`]. If that function returns a [`InterfaceError::Unhooked`] error then
-    /// [`Dolphin`](dolphin::Dolphin) will transition back to an unhooked state.
+    /// the [`InterfaceProvider`] will transition back to an unhooked state.
     ///
     /// # Errors
     ///
@@ -335,7 +336,7 @@ pub trait InterfaceProvider {
     /// For most interfaces, this is the same thing as being "hooked".
     ///
     /// *NOTE*: A currently available interface may become unavaiable in the future and vice versa.
-    /// For example: The user closes dolphin, making it unavailable, but then opens it again later.
+    /// For example: The user closes Dolphin, making it unavailable, but then opens it again later.
     fn is_available(&mut self) -> bool;
 }
 
