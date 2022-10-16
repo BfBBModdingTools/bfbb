@@ -138,18 +138,6 @@ impl DolphinInterface {
         Err(InterfaceError::HookingFailed)
     }
 }
-/// A [GameInterface](crate::game_interface::GameInterface) implemented for Dolphin running on the same local machine.
-///
-/// # Example Usage
-/// ```
-/// use bfbb::game_interface::{ GameInterface, dolphin::DolphinInterface };
-/// use bfbb::Spatula;
-///
-/// let mut game = DolphinInterface::default();
-/// if let Ok(interface) = game.interface() {
-///     game.mark_task_complete(Spatula::SpongebobsCloset);
-/// }
-/// ```
 
 #[cfg(target_os = "linux")]
 fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
