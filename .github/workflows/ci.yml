@@ -1,7 +1,16 @@
 on:
+  push:
+    branches: main
   pull_request:
 
 name: CI
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
 
 jobs:
   ci-matrix:
@@ -22,18 +31,23 @@ jobs:
         run: rustup component add rustfmt && rustup component add clippy
       - name: Setup build cache
         uses: Swatinem/rust-cache@v2
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features --no-run
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
+      - name: Deny all clippy warnings
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-features
       - name: Check code formatting
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
-      - name: Check build
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --features serde,game-interface
-      - name: Deny all clippy warnings
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --features serde,game-interface -- -D warnings

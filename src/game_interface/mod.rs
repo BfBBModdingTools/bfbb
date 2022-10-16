@@ -320,7 +320,7 @@ pub trait InterfaceProvider {
     ///
     /// This function will first attempt to hook the backend if necessary. If the hooking process is sucessful then the provided function
     /// will be called with a reference to the [`GameInterface`]. If that function returns a [`InterfaceError::Unhooked`] error then
-    /// [`Dolphin`](dolphin::Dolphin) will transition back to an unhooked state.
+    /// the [`InterfaceProvider`] will transition back to an unhooked state.
     ///
     /// # Errors
     ///
@@ -336,7 +336,7 @@ pub trait InterfaceProvider {
     /// For most interfaces, this is the same thing as being "hooked".
     ///
     /// *NOTE*: A currently available interface may become unavaiable in the future and vice versa.
-    /// For example: The user closes dolphin, making it unavailable, but then opens it again later.
+    /// For example: The user closes Dolphin, making it unavailable, but then opens it again later.
     fn is_available(&mut self) -> bool;
 }
 

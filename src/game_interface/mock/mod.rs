@@ -6,7 +6,7 @@ use super::{GameInterface, InterfaceProvider, InterfaceResult};
 
 pub mod mock_vars;
 
-/// Provider for [`GameInterface::DolphinBackend`]
+/// Provider for [`GameInterface<DolphinBackend>`]
 #[derive(Default)]
 pub struct MockInterface {
     interface: GameInterface<MockBackend>,

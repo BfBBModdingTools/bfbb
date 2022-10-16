@@ -6,7 +6,7 @@
 //! # Feature flags
 //! Some functionality is gated behind feature flags to allow you to pick and choose what functionality you need for your project.
 //!
-//! `serde`: Implements [`serde`]'s [`Serialize`](serde::Deserialize)/[`Deserialize`](serde::Deserialize) for the core data types.
+//! `serde`: Implements [`serde`](https://docs.rs/serde)'s `Serialize`/`Deserialize` for the core data types.
 //!
 //! `game-interface`: Enables the [`game_interface`] module.
 //!
