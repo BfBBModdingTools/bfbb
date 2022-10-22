@@ -313,9 +313,9 @@ impl<F: InterfaceBackend> PowerUps<F> {
 ///     })
 /// }
 /// ```
-pub trait InterfaceProvider {
+pub trait InterfaceProvider: Default {
     /// Backend implementation for this provider.
-    type Backend;
+    type Backend: InterfaceBackend;
     /// Interface with the backend.
     ///
     /// This function will first attempt to hook the backend if necessary. If the hooking process is sucessful then the provided function
