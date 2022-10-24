@@ -12,7 +12,7 @@ use crate::{
         GameInterface, PowerUps, Task, Tasks,
     },
     game_state::{GameMode, GameOstrich, GameState},
-    Spatula,
+    Level, Spatula,
 };
 
 /// A mock implementation for [`InterfaceBackend`]
@@ -26,14 +26,14 @@ impl Default for GameInterface<MockBackend> {
     fn default() -> Self {
         Self {
             is_loading: MockVar::default(),
-            game_state: MockVar::new(GameState::FirstTime),
-            game_mode: MockVar::new(GameMode::Boot),
+            game_state: MockVar::new(GameState::Play),
+            game_mode: MockVar::new(GameMode::Game),
             game_ostrich: MockVar::new(GameOstrich::InScene),
             powers: PowerUps::new(),
-            scene_id: MockVar::default(),
+            scene_id: MockVar::new(Level::SpongebobHouse.into()),
             spatula_count: MockVar::default(),
             tasks: Tasks::new(),
-            lab_door_cost: MockVar::default(),
+            lab_door_cost: MockVar::new(74),
         }
     }
 }
@@ -71,7 +71,9 @@ impl PowerUps<MockBackend> {
 /// A mock implementation for [`GameVar`] and [`GameVarMut`]
 #[derive(Default)]
 pub struct MockVar<T> {
-    value: T,
+    /// The mocked value. Accessing the value here directly allows setting up a scenario for a test,
+    /// including the ability to mutate [`GameVar`]s that normally are immuatble.
+    pub value: T,
 }
 
 impl<T> MockVar<T> {
