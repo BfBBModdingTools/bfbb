@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `GameVar` and `GameVarMut` traits to represent accessible regions of game memory in a strongly-typed manner.
 - Added `InterfaceError::HookingFailed` for when a hooking attempt fails. `InterfaceError::Unhooked`
   represents when a previously hooked interface becomes unhooked.
+- Added `Hans` struct for interacting with Hans' state.
 
 ### Fixed
 

@@ -38,7 +38,9 @@ pub struct GameInterface<F: InterfaceBackend> {
     ///
     /// Not recommended to mutate this, but the option is available if you wish, it's probably not what you want to do.
     pub game_ostrich: F::Mut<GameOstrich>,
-    /// Array for whether a new game should start with powers enabled. First element is the bubble-bowl and the second is the cruise-bubble.
+    /// [`Hans`]
+    pub hans: Hans<F>,
+    /// [`PowerUps`]
     pub powers: PowerUps<F>,
     /// Location of the ID for the current scene. Can be converted to a [`Level`](crate::Level) via [`TryFrom`].
     ///
@@ -113,6 +115,12 @@ pub struct PowerUps<F: InterfaceBackend> {
     pub initial_bubble_bowl: F::Mut<bool>,
     /// Whether new games should begin with the cruise missile
     pub initial_cruise_bubble: F::Mut<bool>,
+}
+
+/// Implements methods for interacting with Hans' state.
+#[non_exhaustive]
+pub struct Hans<F: InterfaceBackend> {
+    flags: F::Mut<u8>,
 }
 
 impl<F: InterfaceBackend> GameInterface<F> {
@@ -292,6 +300,43 @@ impl<F: InterfaceBackend> PowerUps<F> {
     pub fn unlock_powers(&mut self) -> InterfaceResult<()> {
         self.bubble_bowl.set(true)?;
         self.cruise_bubble.set(true)
+    }
+}
+
+impl<F: InterfaceBackend> Hans<F> {
+    /// Whether or not Hans is currently enabled.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    pub fn is_enabled(&mut self) -> InterfaceResult<bool> {
+        Ok(self.flags.get()? & 4 == 0)
+    }
+
+    /// Sets Hans' enabled status to `value`
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    pub fn set_enabled(&mut self, value: bool) -> InterfaceResult<()> {
+        let new = match value {
+            true => self.flags.get()? & !4,
+            false => self.flags.get()? | 4,
+        };
+        self.flags.set(new)
+    }
+
+    /// Toggles whether Hans is enabled or not
+    ///
+    /// If successful, returns an `Ok(bool)` specifying what the new state of hans is.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`InterfaceError`] if the implementation is unable to access the game.
+    pub fn toggle_enabled(&mut self) -> InterfaceResult<bool> {
+        let new = self.flags.get()? ^ 4;
+        self.flags.set(new)?;
+        Ok(new & 4 == 0)
     }
 }
 

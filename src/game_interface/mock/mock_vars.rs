@@ -9,7 +9,7 @@ use crate::{
     endian::EndianAware,
     game_interface::{
         game_var::{GameVar, GameVarMut, InterfaceBackend},
-        GameInterface, PowerUps, Task, Tasks,
+        GameInterface, Hans, PowerUps, Task, Tasks,
     },
     game_state::{GameMode, GameOstrich, GameState},
     Level, Spatula,
@@ -29,6 +29,7 @@ impl Default for GameInterface<MockBackend> {
             game_state: MockVar::new(GameState::Play),
             game_mode: MockVar::new(GameMode::Game),
             game_ostrich: MockVar::new(GameOstrich::InScene),
+            hans: Hans::new(),
             powers: PowerUps::new(),
             scene_id: MockVar::new(Level::SpongebobHouse.into()),
             spatula_count: MockVar::default(),
@@ -53,6 +54,14 @@ impl Tasks<MockBackend> {
                     )
                 })
                 .collect(),
+        }
+    }
+}
+
+impl Hans<MockBackend> {
+    fn new() -> Self {
+        Self {
+            flags: MockVar::new(3),
         }
     }
 }

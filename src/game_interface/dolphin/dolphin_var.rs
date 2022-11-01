@@ -8,7 +8,7 @@ use crate::{
     endian::EndianAware,
     game_interface::{
         game_var::{GameVar, GameVarMut, InterfaceBackend},
-        GameInterface, InterfaceResult, PowerUps, Task, Tasks,
+        GameInterface, Hans, InterfaceResult, PowerUps, Task, Tasks,
     },
     Spatula,
 };
@@ -73,6 +73,7 @@ impl GameInterface<DolphinBackend> {
             game_state: DolphinVar::new([GAME_STATE_ADDRESS], base_addr, handle),
             game_mode: DolphinVar::new([GAME_MODE_ADDRESS], base_addr, handle),
             game_ostrich: DolphinVar::new([GAME_OSTRICH_ADDRESS], base_addr, handle),
+            hans: Hans::new(base_addr, handle),
             powers: PowerUps::new(base_addr, handle),
             scene_id: DolphinVar::new([SCENE_PTR_ADDRESS, 0], base_addr, handle),
             spatula_count: DolphinVar::new([SPATULA_COUNT_ADDRESS], base_addr, handle),
@@ -112,6 +113,15 @@ impl Tasks<DolphinBackend> {
             })
             .collect();
         Self { arr }
+    }
+}
+
+const HANS_ADDRESS: usize = 0x8029_7E4B;
+impl Hans<DolphinBackend> {
+    fn new(base_addr: usize, handle: ProcessHandle) -> Self {
+        Self {
+            flags: DolphinVar::new([HANS_ADDRESS], base_addr, handle),
+        }
     }
 }
 
