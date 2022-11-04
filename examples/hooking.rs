@@ -25,10 +25,10 @@ fn main() -> InterfaceResult<()> {
         let res = dolphin.do_with_interface(mod_logic);
         match res {
             Ok(()) => println!("GameState was successfully updated"),
-            Err(InterfaceError::HookingFailed) => println!("Could not hook GameInterface"),
             Err(InterfaceError::Unhooked) => println!("GameInterface became unhooked"),
             // A different error occurred, break and report it.
-            Err(_) => break res,
+            Err(InterfaceError::Other) => break res,
+            Err(e) => println!("{e:?}"),
         }
         thread::sleep(Duration::from_secs(2));
     }

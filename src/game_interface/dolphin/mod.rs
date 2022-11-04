@@ -1,6 +1,6 @@
 //! Dolphin backend for [`GameInterface`](super::GameInterface)
 use log::{debug, error, trace};
-use process_memory::TryIntoProcessHandle;
+use process_memory::{CopyAddress, TryIntoProcessHandle};
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 use tap::TapFallible;
 use thiserror::Error;
@@ -111,15 +111,21 @@ impl DolphinInterface {
         self.system.refresh_processes();
 
         let procs = self.system.processes_by_name(PROCESS_NAME);
+        let mut process_found = false;
         let (pid, base_address) = procs
             .into_iter()
             .find_map(|p| {
+                process_found = true;
                 let pid = p.pid();
                 trace!("{} found with pid {pid}", p.name());
                 let addr = get_emulated_base_address(pid)?;
                 Some((pid, addr))
             })
-            .ok_or(InterfaceError::HookingFailed)?;
+            .ok_or(if process_found {
+                InterfaceError::EmulationNotRunning
+            } else {
+                InterfaceError::ProcessNotFound
+            })?;
 
         debug!("Found emulated memory region at {base_address:#X}");
 
@@ -129,6 +135,15 @@ impl DolphinInterface {
         //  On windows this will truncate a usize to a u32 (Windows' actual PID type)
         //  On *nix this will cast an i32 to a u32 and back again (no change)
         let handle = (pid.as_u32() as process_memory::Pid).try_into_process_handle()?;
+
+        // Make sure that the currently running game is BfBB
+        const GAME_CODE: &[u8; 6] = b"GQPE78";
+        let mut buf = [0u8; 6];
+        handle.copy_address(base_address, &mut buf)?;
+        if &buf != GAME_CODE {
+            return Err(InterfaceError::IncorrectGame);
+        }
+
         Ok(GameInterface::<DolphinBackend>::new(base_address, handle))
     }
 }

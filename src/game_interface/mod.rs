@@ -397,9 +397,15 @@ pub enum InterfaceError {
     /// Error for when a previously hooked interface has become unhooked.
     #[error("Interface became unhooked")]
     Unhooked,
-    /// Error for when an interface can't be hooked for some reason.
-    #[error("A hooking attempt failed")]
-    HookingFailed,
+    /// Error for when an interface's target emulator is not running.
+    #[error("Target emulator process could not be found")]
+    ProcessNotFound,
+    /// Error for when an interface's target emulator is found, but it is not currently running a game.
+    #[error("Target emulator is found but no emulation is started")]
+    EmulationNotRunning,
+    /// Error for when an emulated game is found, but it is not BfBB
+    #[error("A game other than SpongeBob SquarePants: Battle for Bikini Bottom is running.")]
+    IncorrectGame,
     /// Error for when an action fails for any other reason.
     #[error("Interface operation failed")]
     Other,
