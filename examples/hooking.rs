@@ -27,7 +27,6 @@ fn main() -> InterfaceResult<()> {
             Ok(()) => println!("GameState was successfully updated"),
             Err(InterfaceError::Unhooked) => println!("GameInterface became unhooked"),
             // A different error occurred, break and report it.
-            Err(InterfaceError::Other) => break res,
             Err(e) => println!("{e:?}"),
         }
         thread::sleep(Duration::from_secs(2));
