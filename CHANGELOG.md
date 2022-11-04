@@ -17,8 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `InterfaceProvider` trait for types that are caple of providing a game interface.
 - Added `MockInterface` for writing testing logic without using a real backend.
 - Added `GameVar` and `GameVarMut` traits to represent accessible regions of game memory in a strongly-typed manner.
-- Added `InterfaceError::HookingFailed` for when a hooking attempt fails. `InterfaceError::Unhooked`
-  represents when a previously hooked interface becomes unhooked.
+- Improved amount of information availabe from `InterfaceError`s
+  - Added new variants for when a hooking attempt fails. `InterfaceError::Unhooked` represents when a previously
+    hooked interface becomes unhooked.
+  - Added `InterfaceError::Io` to wrap unexpected I/O errors instead of reducing them down to `Other`
+  - Replaced `InterfaceError::Other` with `InterfaceError::DataUnavailable` and `InterfaceError::Io`
 - Added `Hans` struct for interacting with Hans' state.
 
 ### Fixed

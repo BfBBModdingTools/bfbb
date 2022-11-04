@@ -88,7 +88,6 @@ impl DolphinInterface {
     fn get_interface_or_hook(&mut self) -> InterfaceResult<&mut GameInterface<DolphinBackend>> {
         let interface = match self.state {
             DolphinState::Unhooked => {
-                // TODO: Add information about why.
                 let interface = self.hook()?;
                 self.state = DolphinState::Hooked(interface);
                 match self.state {
@@ -107,7 +106,6 @@ impl DolphinInterface {
     /// for emulating the GameCube's memory is located. This method will always attempt to hook
     /// Dolphin when called, even if already hooked.
     fn hook(&mut self) -> InterfaceResult<GameInterface<DolphinBackend>> {
-        // TODO: Differentiate errors between Dolphin not being found and Dolphin being found, but the game not being open.
         self.system.refresh_processes();
 
         let procs = self.system.processes_by_name(PROCESS_NAME);
@@ -164,7 +162,7 @@ fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
     let map = maps.iter().rev().find(|m| {
         m.size() == REGION_SIZE
             && m.filename()
-                .map(|f| f.to_string_lossy().contains("dolphin-emu"))
+                .map(|f| f.to_string_lossy().contains(PROCESS_NAME))
                 .unwrap_or(false)
     });
     map.map(|m| m.start())
