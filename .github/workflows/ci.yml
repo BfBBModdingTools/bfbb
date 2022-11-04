@@ -25,7 +25,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: beta
+          toolchain: stable
           override: true
       - name: Add rustup components
         run: rustup component add rustfmt && rustup component add clippy
