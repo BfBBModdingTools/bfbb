@@ -1,7 +1,7 @@
 //! Dolphin backend for [`GameInterface`](super::GameInterface)
 use log::{debug, error, trace};
 use process_memory::TryIntoProcessHandle;
-use sysinfo::{ProcessExt, System, SystemExt};
+use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 use tap::TapFallible;
 use thiserror::Error;
 
@@ -111,31 +111,25 @@ impl DolphinInterface {
         self.system.refresh_processes();
 
         let procs = self.system.processes_by_name(PROCESS_NAME);
-        if let Some((pid, addr)) = procs
+        let (pid, base_address) = procs
             .into_iter()
-            .map(|p| {
+            .find_map(|p| {
                 let pid = p.pid();
                 trace!("{} found with pid {pid}", p.name());
-                (pid, get_emulated_base_address(pid))
+                let addr = get_emulated_base_address(pid)?;
+                Some((pid, addr))
             })
-            .find_map(|(pid, addr)| addr.map(|addr| (pid, addr)))
-        {
-            debug!("Found emulated memory region at {addr:#X}");
-            let base_address = addr;
+            .ok_or(InterfaceError::HookingFailed)?;
 
-            // Convert sysinfo Pid (wrapper type) to process_memory Pid (platform specific alias)
-            #[cfg(target_os = "windows")]
-            // Work around for sysinfo crate using usize on Windows for Pids
-            let pid = <sysinfo::Pid as Into<usize>>::into(pid) as u32;
+        debug!("Found emulated memory region at {base_address:#X}");
 
-            // This isn't uselss on *nix
-            #[allow(clippy::useless_conversion)]
-            let pid: process_memory::Pid = pid.into();
-            let handle = pid.try_into_process_handle()?;
-            return Ok(GameInterface::<DolphinBackend>::new(base_address, handle));
-        }
-
-        Err(InterfaceError::HookingFailed)
+        // Convert sysinfo Pid (wrapper type) to process_memory Pid (platform specific alias)
+        // Portability Bullshit:
+        //  Use `as_u32` as a workaround for sysinfo crate using usize for PIDs on Windows instead of DWORD
+        //  On windows this will truncate a usize to a u32 (Windows' actual PID type)
+        //  On *nix this will cast an i32 to a u32 and back again (no change)
+        let handle = (pid.as_u32() as process_memory::Pid).try_into_process_handle()?;
+        Ok(GameInterface::<DolphinBackend>::new(base_address, handle))
     }
 }
 
