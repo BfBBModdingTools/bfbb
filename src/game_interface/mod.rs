@@ -137,14 +137,14 @@ impl<F: InterfaceBackend> GameInterface<F> {
     ///
     /// # Errors
     ///
-    /// Will return an [`InterfaceError::Other`] sometimes when the game is loading due to the scene pointer being null
+    /// Will return an [`InterfaceError::DataUnavailable`] sometimes when the game is loading due to the scene pointer being null
     pub fn get_current_level(&self) -> InterfaceResult<Level> {
         // TODO: It would be great to eventually allow self.scene_id to be of type `F::Var<Level>` directly and be able
         //       to blanket impl `GameVar<T=Level>` for all backends by using an actual `GameVar<T=[u8;4]>` internally.
         self.scene_id
             .get()?
             .try_into()
-            .map_err(|_| InterfaceError::Other)
+            .map_err(|_| InterfaceError::DataUnavailable)
     }
 
     /// Marks a task as available (Silver). This will not update an already unlocked task.
@@ -391,9 +391,13 @@ pub type InterfaceResult<T> = std::result::Result<T, InterfaceError>;
 /// Error type for failed [`GameInterface`] actions.
 ///
 /// This list is non-exhaustive and may grow over time.
-#[derive(Copy, Clone, Debug, Error)]
+#[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum InterfaceError {
+    /// Error for when interface is still properly hooked, but the requested operation can not be completed at this time
+    /// (e.g. the game is loading and some heap data isn't available yet.)
+    #[error("Data temporarily unavailable")]
+    DataUnavailable,
     /// Error for when a previously hooked interface has become unhooked.
     #[error("Interface became unhooked")]
     Unhooked,
@@ -406,16 +410,16 @@ pub enum InterfaceError {
     /// Error for when an emulated game is found, but it is not BfBB
     #[error("A game other than SpongeBob SquarePants: Battle for Bikini Bottom is running.")]
     IncorrectGame,
-    /// Error for when an action fails for any other reason.
-    #[error("Interface operation failed")]
-    Other,
+    /// Error for when I/O with the interface fails.
+    #[error("Unexpected I/O error")]
+    Io(std::io::Error),
 }
 
 impl From<std::io::Error> for InterfaceError {
     fn from(e: std::io::Error) -> Self {
         // For now, treat any error other than InvalidData as being unhooked
         if e.kind() == std::io::ErrorKind::InvalidData {
-            return Self::Other;
+            return Self::Io(e);
         }
         Self::Unhooked
     }
