@@ -112,10 +112,16 @@ impl DolphinInterface {
         let mut process_found = false;
         let (pid, base_address) = procs
             .into_iter()
-            .find_map(|p| {
+            .find_map(|proc| {
                 process_found = true;
-                let pid = p.pid();
-                trace!("{} found with pid {pid}", p.name());
+                // Convert sysinfo Pid (wrapper type) to process_memory Pid (platform specific alias)
+                // Portability Bullshit:
+                //  Use `as_u32` as a workaround for sysinfo crate using usize for PIDs on Windows instead of DWORD
+                //  On windows this will truncate a usize to a u32 (Windows' actual PID type)
+                //  On *nix this will cast an i32 to a u32 and back again (no change)
+                let pid = proc.pid().as_u32() as process_memory::Pid;
+
+                trace!("{} found with pid {pid}", proc.name());
                 let addr = get_emulated_base_address(pid)?;
                 Some((pid, addr))
             })
@@ -127,12 +133,7 @@ impl DolphinInterface {
 
         debug!("Found emulated memory region at {base_address:#X}");
 
-        // Convert sysinfo Pid (wrapper type) to process_memory Pid (platform specific alias)
-        // Portability Bullshit:
-        //  Use `as_u32` as a workaround for sysinfo crate using usize for PIDs on Windows instead of DWORD
-        //  On windows this will truncate a usize to a u32 (Windows' actual PID type)
-        //  On *nix this will cast an i32 to a u32 and back again (no change)
-        let handle = (pid.as_u32() as process_memory::Pid).try_into_process_handle()?;
+        let handle = pid.try_into_process_handle()?;
 
         // Make sure that the currently running game is BfBB
         const GAME_CODE: &[u8; 6] = b"GQPE78";
@@ -147,9 +148,9 @@ impl DolphinInterface {
 }
 
 #[cfg(target_os = "linux")]
-fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
+fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
     use proc_maps::get_process_maps;
-    let maps = match get_process_maps(pid.into()) {
+    let maps = match get_process_maps(pid) {
         Err(e) => {
             error!("Could not get dolphin process maps\n{e:?}");
             return None;
@@ -169,7 +170,7 @@ fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
 }
 
 #[cfg(target_os = "windows")]
-fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
+fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
     use winapi::um::handleapi::CloseHandle;
     use winapi::um::memoryapi::VirtualQueryEx;
     use winapi::um::processthreadsapi::OpenProcess;
@@ -183,7 +184,7 @@ fn get_emulated_base_address(pid: sysinfo::Pid) -> Option<usize> {
         let handle = OpenProcess(
             PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE,
             0,
-            <sysinfo::Pid as Into<usize>>::into(pid) as u32,
+            pid,
         );
         if handle.is_null() {
             // TODO use GetLastError for error feedback
