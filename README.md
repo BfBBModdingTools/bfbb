@@ -17,12 +17,22 @@ _SpongeBob SquarePants: Battle for Bikini Bottom_
 ## Compatibility
 
 This library currently only supports directly interacting with the GameCube version
-of the game, running in Dolphin Emulator on Windows or Linux. More platforms will
+of the game, running in Dolphin Emulator (Windows, [Linux](#Linux), and [MacOS](#MacOS)). More platforms will
 be added over time.
 
 ## Example Projects
 
 - [BfBB Clash](https://github.com/999gary/BfBB-Clash) - A realtime multi-player mod
+
+## Linux
+
+Your app will need permissions to read external process memory. This can be achieved by running with root or by setting the ptrace capability on the binary `# setcap cap_sys_ptrace=eip <path/to/binary>`
+
+## MacOS
+
+Due to MacOS security features your app will need to be signed with the `com.apple.security.cs.debugger`
+entitlement for the OS to allow attaching to Dolphin's process. Additionally Dolphin will need to be
+resigned with the `com.apple.security.get-task-allow` entitlement.
 
 #### License
 
