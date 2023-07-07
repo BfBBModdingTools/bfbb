@@ -234,7 +234,6 @@ fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
 #[cfg(target_os = "macos")]
 fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
     use proc_maps::get_process_maps;
-    error!("pid is {pid:?}");
     let maps = match get_process_maps(pid) {
         Err(e) => {
             error!("Could not get dolphin process maps\n{e:#?}");
@@ -243,25 +242,15 @@ fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
         Ok(maps) => maps,
     };
 
-    error!(
-        "maps \n{:#X?}",
-        maps.iter()
-            .filter(|m| m.size() == REGION_SIZE)
-            .collect::<Vec<_>>()
-    );
-
     // Like Linux, Multiple maps exist that fit our criteria who only differ by address.
     // This is also not a very robust solution but on my machine the first map with a filename
     // containing "dolphin-emu" is correct.
     // TODO: A better solution would be to read the first 6 bytes of each candidate and return the
     //       the first one that contains the expected game code
-    let map = maps
-        .iter()
-        .filter(|m| {
-            m.size() == REGION_SIZE
-                && m.filename()
-                    .is_some_and(|filename| filename.to_string_lossy().contains("dolphin-emu"))
-        })
-        .next();
+    let map = maps.iter().find(|m| {
+        m.size() == REGION_SIZE
+            && m.filename()
+                .is_some_and(|filename| filename.to_string_lossy().contains("dolphin-emu"))
+    });
     map.map(|m| m.start())
 }
