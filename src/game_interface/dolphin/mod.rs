@@ -18,7 +18,7 @@ const REGION_SIZE: usize = 0x200_0000;
 
 #[cfg(target_os = "linux")]
 const PROCESS_NAME: &str = "dolphin-emu";
-#[cfg(target_os = "windows")]
+#[cfg(any(target_os = "windows", target_os = "macos"))]
 const PROCESS_NAME: &str = "Dolphin";
 
 /// Error type for failures to interact with Dolphin's memory.
@@ -140,6 +140,7 @@ impl DolphinInterface {
         let mut buf = [0u8; 6];
         handle.copy_address(base_address, &mut buf)?;
         if &buf != GAME_CODE {
+            error!("Incorrect game code: {buf:?}");
             return Err(InterfaceError::IncorrectGame);
         }
 
@@ -228,4 +229,39 @@ fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
     }
 
     None
+}
+
+#[cfg(target_os = "macos")]
+fn get_emulated_base_address(pid: process_memory::Pid) -> Option<usize> {
+    use proc_maps::get_process_maps;
+    error!("pid is {pid:?}");
+    let maps = match get_process_maps(pid) {
+        Err(e) => {
+            error!("Could not get dolphin process maps\n{e:#?}");
+            return None;
+        }
+        Ok(maps) => maps,
+    };
+
+    error!(
+        "maps \n{:#X?}",
+        maps.iter()
+            .filter(|m| m.size() == REGION_SIZE)
+            .collect::<Vec<_>>()
+    );
+
+    // Like Linux, Multiple maps exist that fit our criteria who only differ by address.
+    // This is also not a very robust solution but on my machine the first map with a filename
+    // containing "dolphin-emu" is correct.
+    // TODO: A better solution would be to read the first 6 bytes of each candidate and return the
+    //       the first one that contains the expected game code
+    let map = maps
+        .iter()
+        .filter(|m| {
+            m.size() == REGION_SIZE
+                && m.filename()
+                    .is_some_and(|filename| filename.to_string_lossy().contains("dolphin-emu"))
+        })
+        .next();
+    map.map(|m| m.start())
 }
