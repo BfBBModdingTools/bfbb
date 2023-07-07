@@ -16,7 +16,7 @@ jobs:
   ci-matrix:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
