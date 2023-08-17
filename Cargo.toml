@@ -31,7 +31,7 @@ game-interface = [
 tap = "1"
 serde = { version = "1", features = ["derive"], optional = true }
 strum = "0.24"
-strum_macros = "0.24"
+strum_macros = "0.25"
 
 thiserror = "1"
 
